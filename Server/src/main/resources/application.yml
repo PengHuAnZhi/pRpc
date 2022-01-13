@@ -1,0 +1,11 @@
+server:
+  port: 8080
+prpc:
+  nacosAddress: "localhost:8848"
+  port: 9999
+  serializerAlgorithm: "JSON"
+spring:
+  cloud:
+    nacos:
+      discovery:
+        service: "aaa"
