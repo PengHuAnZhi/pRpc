@@ -24,7 +24,10 @@ public abstract class Message implements Serializable {
      * 响应类型 {@link byte} 值
      */
     public static final int RPC_MESSAGE_TYPE_RESPONSE = 2;
-
+    /**
+     * Ping消息类型
+     */
+    public static final int PING_MESSAGE = 3;
     /**
      * 消息类型对应{@link Class}类的集合
      */

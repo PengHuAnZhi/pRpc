@@ -63,7 +63,10 @@ public class PrpcProxy implements InvocationHandler {
                 .parameterValue(args)
                 .build();
         rpcRequestMessage.setSequenceId(sequenceId);
-        NettyClient.getInstance().sendPrpcRequestMessage(rpcRequestMessage);
+        boolean flag = NettyClient.getInstance().sendPrpcRequestMessage(rpcRequestMessage);
+        if (!flag) {
+            return null;
+        }
         //创建这次Rpc请求所需要的Promise对象用于接收结果,TODO
         Promise<Object> promise = new DefaultPromise<>(new DefaultEventLoop().next());
         //将当前Promise传送到响应处理类中的一个Map

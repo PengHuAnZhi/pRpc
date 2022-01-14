@@ -30,7 +30,6 @@ public enum ErrorMsg {
      * 获取实例失败
      **/
     GET_INSTANCE_ERROR("获取实例失败"),
-
     /**
      * 实例连接失败
      **/
@@ -43,12 +42,10 @@ public enum ErrorMsg {
      * 未知的序列化算法
      **/
     UNKNOWN_SERIALIZER_ALGORITHM("未知的序列化算法"),
-
     /**
      * 错误的重连次数
      **/
     ILLEGAL_RECONNECT_NUMBER("错误的重连次数"),
-
     /**
      * 未知的魔数
      **/
@@ -64,8 +61,11 @@ public enum ErrorMsg {
     /**
      * 调用方法失败
      **/
-    FAILED_INVOKE_METHOD("调用方法失败");
-
+    FAILED_INVOKE_METHOD("调用方法失败"),
+    /**
+     * 没有可用实例
+     **/
+    NO_MORE_INSTANCE("没有可用实例");
 
     /**
      * 错误信息

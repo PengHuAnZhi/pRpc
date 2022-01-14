@@ -6,22 +6,26 @@ import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.netty.channel.ServerChannelPool;
 import com.phz.prpc.netty.handler.RpcResponseMessageHandler;
+import com.phz.prpc.netty.message.PingMessage;
 import com.phz.prpc.netty.message.RpcRequestMessage;
 import com.phz.prpc.netty.protocol.MessageCodecSharable;
 import com.phz.prpc.netty.protocol.ProtocolFrameDecoder;
 import com.phz.prpc.registry.NacosRegistry;
 import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ChannelInputShutdownEvent;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.nio.channels.Selector;
 import java.util.List;
@@ -69,9 +73,51 @@ public final class NettyClient {
         bootstrap = new Bootstrap();
         bootstrap.group(group)
                 .channel(NioSocketChannel.class)
+                //是否开启 TCP 底层心跳机制
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                //TCP默认开启了 Nagle 算法，该算法的作用是尽可能发送大数据快，减少网络传输。
+                .option(ChannelOption.TCP_NODELAY, true)
+                .option(ChannelOption.ALLOW_HALF_CLOSURE, true)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) {
+                        // 用来判断是不是 读空闲时间过长，或写空闲时间过长
+                        // 3s 内如果没有向服务器写数据，会触发一个 IdleState#WRITER_IDLE 事件
+                        ch.pipeline().addLast(new IdleStateHandler(0, 3, 0));
+                        // ChannelDuplexHandler 可以同时作为入站和出站处理器
+                        ch.pipeline().addLast(new ChannelDuplexHandler() {
+                            /**
+                             * 用来触发特殊事件
+                             **/
+                            @Override
+                            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+                                if (evt instanceof IdleStateEvent) {
+                                    IdleStateEvent event = (IdleStateEvent) evt;
+                                    // 触发了写空闲事件
+                                    if (event.state() == IdleState.WRITER_IDLE) {
+                                        log.info("3s 没有写数据了，发送一个心跳包");
+                                        ctx.writeAndFlush(new PingMessage());
+                                    }
+                                } else if (evt instanceof ChannelInputShutdownEvent) {
+                                    log.info("一个连接的远端关闭");
+                                }
+                            }
+
+                            /**
+                             * 用来触发异常事件
+                             **/
+                            @Override
+                            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+                                log.info("发现异常 : {}", cause.getMessage());
+                                Channel channel = ctx.channel();
+                                Channel parent = channel.parent();
+                                if (parent != null) {
+                                    parent.close();
+                                } else {
+                                    channel.close();
+                                }
+                            }
+                        });
                         ch.pipeline().addLast(new ProtocolFrameDecoder());
                         ch.pipeline().addLast(loggingHandler);
                         ch.pipeline().addLast(messageCodecSharable);
@@ -147,14 +193,18 @@ public final class NettyClient {
     @SneakyThrows
     private Channel doConnect(String hostName, int port, int reConnectNumber) {
         CompletableFuture<Channel> completableFuture = new CompletableFuture<>();
-        bootstrap.connect(hostName, port).addListener((ChannelFutureListener) future -> {
+        ChannelFuture channelFuture = bootstrap.connect(hostName, port);
+        channelFuture.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
                 completableFuture.complete(future.channel());
             } else if (reConnectNumber <= 0) {
                 future.channel().close();
                 completableFuture.completeExceptionally(new PrpcException(ErrorMsg.CONNECT_INSTANCE_ERROR));
                 log.error("{}:{} 连接失败！", hostName, port);
+                serverChannelPool.removeChannel(hostName, port);
+                throw new PrpcException(ErrorMsg.CONNECT_INSTANCE_ERROR);
             } else {
+                log.error("{} {} 连接异常，正在重连...", hostName, port);
                 bootstrap.config().group().schedule(() -> {
                             doConnect(hostName, port, reConnectNumber - 1);
                         },
@@ -162,6 +212,7 @@ public final class NettyClient {
                         TimeUnit.SECONDS);
             }
         });
+        channelFuture.channel().closeFuture().addListener((ChannelFutureListener) future -> close());
         return completableFuture.get();
     }
 
@@ -169,9 +220,14 @@ public final class NettyClient {
      * 代理类{@link com.phz.prpc.proxy.PrpcProxy#invoke}发送消息会调用这个方法
      *
      * @param requestMessage 要发送的消息对象
+     * @return boolean 返回消息是否发送成功
      **/
-    public void sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
+    public boolean sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
         List<Instance> instances = NacosRegistry.getInstance().getInstances(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
+        if (CollectionUtils.isEmpty(instances)) {
+            log.error("没有可用实例");
+            return false;
+        }
         //TODO 负载均衡
         Instance instance = instances.get(0);
         String ip = instance.getIp();
@@ -179,6 +235,7 @@ public final class NettyClient {
         Channel prpcChannel = getPrpcChannel(ip, port);
         log.info("客户端向 {}:{} 发送消息:{}", ip, port, requestMessage);
         prpcChannel.writeAndFlush(requestMessage);
+        return true;
     }
 
     /**

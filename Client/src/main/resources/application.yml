@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8001
 prpc:
   nacosAddress: "localhost:8848"
   reConnectNumber: 5

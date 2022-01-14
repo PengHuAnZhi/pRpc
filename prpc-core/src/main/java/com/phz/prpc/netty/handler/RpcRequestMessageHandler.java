@@ -40,7 +40,7 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
         String serviceName = msg.getInterfaceName() + ":" + msg.getGroupName();
         //服务提供类根据服务名选取已注册的服务class对象
         Class<?> clazz = serviceProvider.getService(serviceName);
-        Method method = null;
+        Method method;
         try {
             method = clazz.getMethod(methodName, msg.getParameterTypes());
         } catch (NoSuchMethodException e) {
