@@ -1,13 +1,16 @@
 package com.phz.prpc.netty.handler;
 
+import com.phz.prpc.exception.ErrorMsg;
+import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.netty.message.RpcRequestMessage;
 import com.phz.prpc.netty.message.RpcResponseMessage;
 import com.phz.prpc.netty.server.ServiceProvider;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -19,6 +22,7 @@ import java.lang.reflect.Method;
  * @date 2022年01月10日 21:36
  */
 @ChannelHandler.Sharable
+@Slf4j
 public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcRequestMessage> {
 
     /**
@@ -32,19 +36,30 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
         ServiceProvider serviceProvider = ServiceProvider.getInstance();
         RpcResponseMessage rpcResponseMessage = new RpcResponseMessage();
         rpcResponseMessage.setSequenceId(msg.getSequenceId());
+        String methodName = msg.getMethodName();
+        String serviceName = msg.getInterfaceName() + ":" + msg.getGroupName();
+        //服务提供类根据服务名选取已注册的服务class对象
+        Class<?> clazz = serviceProvider.getService(serviceName);
+        Method method = null;
         try {
-            String serviceName = msg.getInterfaceName() + ":" + msg.getGroupName();
-            //服务提供类根据服务名选取已注册的服务class对象
-            Class<?> clazz = serviceProvider.getService(serviceName);
-            Method method = clazz.getMethod(msg.getMethodName(), msg.getParameterTypes());
-            Object result = method.invoke(serviceProvider.getServiceInstance(clazz), msg.getParameterValue());
-            rpcResponseMessage.setReturnValue(result);
-        } catch (Exception e) {
-            rpcResponseMessage.setExceptionValue(new Exception("远程方法调用错误 ： " + e.getMessage()));
+            method = clazz.getMethod(methodName, msg.getParameterTypes());
+        } catch (NoSuchMethodException e) {
+            log.error("方法{}不存在", methodName);
+            rpcResponseMessage.setExceptionValue(e);
+            ctx.writeAndFlush(rpcResponseMessage);
+            throw new PrpcException(ErrorMsg.UNKNOWN_METHOD);
         }
-        Channel channel = ctx.channel();
-        if (channel.isActive()) {
-            channel.writeAndFlush(rpcResponseMessage);
+        Object result;
+        try {
+            result = method.invoke(serviceProvider.getServiceInstance(clazz), msg.getParameterValue());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            log.error("方法{}调用失败", methodName);
+            rpcResponseMessage.setExceptionValue(e);
+            ctx.writeAndFlush(rpcResponseMessage);
+            throw new PrpcException(ErrorMsg.FAILED_INVOKE_METHOD);
         }
+        rpcResponseMessage.setReturnValue(result);
+        log.info("远程方法调用成功 ： {}", result);
+        ctx.writeAndFlush(rpcResponseMessage);
     }
 }

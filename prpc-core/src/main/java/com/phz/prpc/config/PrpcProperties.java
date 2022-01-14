@@ -25,7 +25,7 @@ public class PrpcProperties {
     /**
      * {@code rpc}服务端口地址
      **/
-    private Integer port;
+    private Integer serverPort;
     /**
      * 序列化算法
      **/

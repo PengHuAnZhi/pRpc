@@ -2,6 +2,9 @@ package com.phz.prpc.netty.serializer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.phz.prpc.exception.ErrorMsg;
+import com.phz.prpc.exception.PrpcException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,6 +19,7 @@ import java.nio.charset.StandardCharsets;
  * @author PengHuanZhi
  * @date 2022年01月13日 12:24
  */
+@Slf4j
 public enum SerializerAlgorithm implements Serializer {
     /**
      * {@code JDK}序列化实现
@@ -52,7 +56,8 @@ public enum SerializerAlgorithm implements Serializer {
                 new ObjectOutputStream(out).writeObject(object);
                 return out.toByteArray();
             } catch (IOException e) {
-                throw new RuntimeException("SerializerAlgorithm.JDK 序列化错误", e);
+                log.error("JDK 反序列化失败 : {}", e.getMessage());
+                throw new PrpcException(ErrorMsg.DESERIALIZE_FAILED);
             }
         }
     },

@@ -38,7 +38,34 @@ public enum ErrorMsg {
     /**
      * 服务不存在
      **/
-    SERVER_NOT_FOUND("服务不存在");
+    SERVER_NOT_FOUND("服务不存在"),
+    /**
+     * 未知的序列化算法
+     **/
+    UNKNOWN_SERIALIZER_ALGORITHM("未知的序列化算法"),
+
+    /**
+     * 错误的重连次数
+     **/
+    ILLEGAL_RECONNECT_NUMBER("错误的重连次数"),
+
+    /**
+     * 未知的魔数
+     **/
+    UNKNOWN_MAGIC_CODE("未知的魔数"),
+    /**
+     * 反序列化失败
+     **/
+    DESERIALIZE_FAILED("反序列化失败"),
+    /**
+     * 未知的方法
+     **/
+    UNKNOWN_METHOD("未知的方法"),
+    /**
+     * 调用方法失败
+     **/
+    FAILED_INVOKE_METHOD("调用方法失败");
+
 
     /**
      * 错误信息

@@ -35,7 +35,7 @@ public class RpcResponseMessageHandler extends SimpleChannelInboundHandler<RpcRe
      **/
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponseMessage msg) {
-        log.info("msg : {}", msg);
+        log.info("{} : 收到响应 : {}", ctx.channel().localAddress(), msg);
         Promise<Object> promise = PROMISE_MAP.get(msg.getSequenceId());
         if (promise == null) {
             return;

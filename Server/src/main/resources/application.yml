@@ -2,8 +2,9 @@ server:
   port: 8080
 prpc:
   nacosAddress: "localhost:8848"
-  port: 9999
-  serializerAlgorithm: "JSON"
+  serverPort: 9999
+  serializerAlgorithm: "JDK"
+
 spring:
   cloud:
     nacos:

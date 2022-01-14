@@ -52,6 +52,11 @@ public final class NettyClient {
     private final NioEventLoopGroup group;
 
     /**
+     * 默认重连次数为5
+     **/
+    private static final int DEFAULT_RECONNECT_NUMBER = 5;
+
+    /**
      * 私有构造方法，禁用手动实例化<br>
      * 第一次加载会将{@link ServerChannelPool }单例取出赋值到当前类属性，然后创建一个{@link NioEventLoopGroup}，最后使用这个请求事件循环组创建好一个{@code Netty}网络请求对象
      **/
@@ -122,7 +127,11 @@ public final class NettyClient {
         PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
         Integer reConnectNumber = prpcProperties.getReConnectNumber();
         if (reConnectNumber == null) {
-            return doConnect(hostName, port, 5);
+            return doConnect(hostName, port, DEFAULT_RECONNECT_NUMBER);
+        }
+        if (reConnectNumber <= 0) {
+            log.error("错误的重连次数:{}", reConnectNumber);
+            throw new PrpcException(ErrorMsg.ILLEGAL_RECONNECT_NUMBER);
         }
         return doConnect(hostName, port, reConnectNumber);
     }
@@ -144,7 +153,7 @@ public final class NettyClient {
             } else if (reConnectNumber <= 0) {
                 future.channel().close();
                 completableFuture.completeExceptionally(new PrpcException(ErrorMsg.CONNECT_INSTANCE_ERROR));
-                log.error("连接失败！");
+                log.error("{}:{} 连接失败！", hostName, port);
             } else {
                 bootstrap.config().group().schedule(() -> {
                             doConnect(hostName, port, reConnectNumber - 1);
@@ -165,7 +174,10 @@ public final class NettyClient {
         List<Instance> instances = NacosRegistry.getInstance().getInstances(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
         //TODO 负载均衡
         Instance instance = instances.get(0);
-        Channel prpcChannel = getPrpcChannel(instance.getIp(), instance.getPort());
+        String ip = instance.getIp();
+        int port = instance.getPort();
+        Channel prpcChannel = getPrpcChannel(ip, port);
+        log.info("客户端向 {}:{} 发送消息:{}", ip, port, requestMessage);
         prpcChannel.writeAndFlush(requestMessage);
     }
 
@@ -174,5 +186,6 @@ public final class NettyClient {
      **/
     public void close() {
         group.shutdownGracefully();
+        log.info("客户端注销成功！");
     }
 }

@@ -1,5 +1,7 @@
 package com.phz.prpc.proxy;
 
+import com.phz.prpc.exception.ErrorMsg;
+import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.netty.client.NettyClient;
 import com.phz.prpc.netty.message.RpcRequestMessage;
 import com.phz.prpc.netty.protocol.SequenceIdGenerator;
@@ -9,6 +11,7 @@ import io.netty.util.concurrent.Promise;
 import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -24,6 +27,7 @@ import static com.phz.prpc.netty.handler.RpcResponseMessageHandler.PROMISE_MAP;
  */
 @Data
 @Builder
+@Slf4j
 public class PrpcProxy implements InvocationHandler {
 
     /**
@@ -48,10 +52,11 @@ public class PrpcProxy implements InvocationHandler {
     @SneakyThrows
     public Object invoke(Object proxy, Method method, Object[] args) {
         int sequenceId = SequenceIdGenerator.nextId();
+        String methodName = method.getName();
         RpcRequestMessage rpcRequestMessage = RpcRequestMessage
                 .builder()
                 .interfaceName(method.getDeclaringClass().getCanonicalName())
-                .methodName(method.getName())
+                .methodName(methodName)
                 .groupName(groupName)
                 .returnType(method.getReturnType())
                 .parameterTypes(method.getParameterTypes())
@@ -59,15 +64,18 @@ public class PrpcProxy implements InvocationHandler {
                 .build();
         rpcRequestMessage.setSequenceId(sequenceId);
         NettyClient.getInstance().sendPrpcRequestMessage(rpcRequestMessage);
-        //创建这次Rpc请求所需要的Promise对象用于接收结果
+        //创建这次Rpc请求所需要的Promise对象用于接收结果,TODO
         Promise<Object> promise = new DefaultPromise<>(new DefaultEventLoop().next());
         //将当前Promise传送到响应处理类中的一个Map
         PROMISE_MAP.put(sequenceId, promise);
         promise.await();
         if (promise.isSuccess()) {
-            return promise.getNow();
+            Object result = promise.getNow();
+            log.info("方法{}调用成功,结果为:{}", methodName, result);
+            return result;
         } else {
-            throw new RuntimeException(promise.cause());
+            log.error("方法{}调用失败,原因:{}", methodName, promise.cause());
+            throw new PrpcException(ErrorMsg.FAILED_INVOKE_METHOD);
         }
     }
 

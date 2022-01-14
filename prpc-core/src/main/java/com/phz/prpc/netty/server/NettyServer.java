@@ -59,12 +59,13 @@ public final class NettyServer {
     @SneakyThrows
     public void start() {
         PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
-        EventLoopGroup boss = new NioEventLoopGroup(1);
+        EventLoopGroup boss = new NioEventLoopGroup();
         EventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
         MessageCodecSharable messageCodecSharable = new MessageCodecSharable();
         // rpc 请求消息处理器
         RpcRequestMessageHandler rpcRequestMessageHandler = new RpcRequestMessageHandler();
+        final ProtocolFrameDecoder protocolFrameDecoder = new ProtocolFrameDecoder();
         ChannelFuture channelFuture = new ServerBootstrap()
                 .group(boss, worker)
                 .channel(NioServerSocketChannel.class)
@@ -72,11 +73,11 @@ public final class NettyServer {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ch.pipeline().addLast(loggingHandler);
-                        ch.pipeline().addLast(new ProtocolFrameDecoder());
+                        ch.pipeline().addLast(protocolFrameDecoder);
                         ch.pipeline().addLast(messageCodecSharable);
                         ch.pipeline().addLast(rpcRequestMessageHandler);
                     }
-                }).bind(prpcProperties.getPort()).sync();
+                }).bind(prpcProperties.getServerPort()).sync();
         ChannelFuture closeFuture = channelFuture.channel().closeFuture();
         closeFuture.addListener((ChannelFutureListener) future -> {
             boss.shutdownGracefully();

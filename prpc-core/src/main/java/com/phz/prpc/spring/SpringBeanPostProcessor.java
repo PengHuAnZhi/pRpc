@@ -59,7 +59,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
                 //获取本机Ip
                 String host = InetAddress.getLocalHost().getHostAddress();
                 //从配置文件中获取本地rpc服务端口号
-                int port = prpcProperties.getPort();
+                int port = prpcProperties.getServerPort();
                 InetSocketAddress address = new InetSocketAddress(host, port);
                 //向注册中心注册服务
                 ServiceProvider.getInstance().publishService(prpcServiceName, address.getHostName(), address.getPort(), bean.getClass());
