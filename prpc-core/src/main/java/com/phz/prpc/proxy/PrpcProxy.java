@@ -3,8 +3,8 @@ package com.phz.prpc.proxy;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.netty.client.NettyClient;
+import com.phz.prpc.netty.handler.RpcResponseMessageHandler;
 import com.phz.prpc.netty.message.RpcRequestMessage;
-import com.phz.prpc.netty.protocol.SequenceIdGenerator;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
@@ -16,8 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-
-import static com.phz.prpc.netty.handler.RpcResponseMessageHandler.PROMISE_MAP;
+import java.util.UUID;
 
 /**
  * 调用远程服务的代理类
@@ -51,7 +50,7 @@ public class PrpcProxy implements InvocationHandler {
     @Override
     @SneakyThrows
     public Object invoke(Object proxy, Method method, Object[] args) {
-        int sequenceId = SequenceIdGenerator.nextId();
+        String sequenceId = UUID.randomUUID().toString();
         String methodName = method.getName();
         RpcRequestMessage rpcRequestMessage = RpcRequestMessage
                 .builder()
@@ -70,7 +69,7 @@ public class PrpcProxy implements InvocationHandler {
         //创建这次Rpc请求所需要的Promise对象用于接收结果,TODO
         Promise<Object> promise = new DefaultPromise<>(new DefaultEventLoop().next());
         //将当前Promise传送到响应处理类中的一个Map
-        PROMISE_MAP.put(sequenceId, promise);
+        RpcResponseMessageHandler.putPromise(sequenceId, promise);
         promise.await();
         if (promise.isSuccess()) {
             Object result = promise.getNow();

@@ -17,15 +17,15 @@ import java.util.Map;
 @Data
 public abstract class Message implements Serializable {
     /**
-     * 请求类型 {@link byte} 值
+     * 请求类型 {@code byte} 值
      */
     public static final int RPC_MESSAGE_TYPE_REQUEST = 1;
     /**
-     * 响应类型 {@link byte} 值
+     * 响应类型 {@code byte} 值
      */
     public static final int RPC_MESSAGE_TYPE_RESPONSE = 2;
     /**
-     * Ping消息类型
+     * {@link PingMessage}消息类型
      */
     public static final int PING_MESSAGE = 3;
     /**
@@ -54,7 +54,7 @@ public abstract class Message implements Serializable {
     /**
      * 请求序号
      */
-    private int sequenceId;
+    private String sequenceId;
 
     /**
      * 消息类型

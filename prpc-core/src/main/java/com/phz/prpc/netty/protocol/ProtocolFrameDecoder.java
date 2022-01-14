@@ -18,9 +18,9 @@ public class ProtocolFrameDecoder extends LengthFieldBasedFrameDecoder {
      **/
     private static final Integer MAX_FRAME_LENGTH = 4096;
     /**
-     * 长度字段偏移量，在编解码器中，我们将长度字节放在了第十三个，所以长度字段偏移量为1
+     * 长度字段偏移量，在编解码器中，我们将长度字节放在了第四十四个，所以长度字段偏移量为44
      **/
-    private static final Integer LENGTH_FIELD_OFFSET = 12;
+    private static final Integer LENGTH_FIELD_OFFSET = 44;
     /**
      * 长度字段长度
      **/

@@ -28,10 +28,22 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public final class NettyServer {
+
+    /**
+     * {@code Netty Boss}线程，只处理客户端连接请求
+     **/
+    private static EventLoopGroup boss;
+    /**
+     * {@code Netty Worker}线程，只处理客户端读写请求
+     **/
+    private static EventLoopGroup worker;
+
     /**
      * 私有构造方法，禁用手动实例化
      **/
     private NettyServer() {
+        boss = new NioEventLoopGroup(1);
+        worker = new NioEventLoopGroup();
     }
 
     /**
@@ -59,8 +71,6 @@ public final class NettyServer {
     @SneakyThrows
     public void start() {
         PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
-        EventLoopGroup boss = new NioEventLoopGroup();
-        EventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
         MessageCodecSharable messageCodecSharable = new MessageCodecSharable();
         // rpc 请求消息处理器

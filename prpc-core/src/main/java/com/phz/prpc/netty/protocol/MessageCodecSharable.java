@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,6 +46,11 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
      * 魔数，判断是否无效数据包
      **/
     private static final byte[] MAGIC_NUMBER = new byte[]{1, 2, 3, 4};
+
+    /**
+     * 请求序列号{@link Message#sequenceId}字节数组长度
+     **/
+    private static final int SEQUENCE_ID_LENGTH = 36;
 
     /**
      * 将明文按照自己的协议编码
@@ -78,8 +84,8 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         out.writeByte(ordinal);
         // 4. 1 字节的指令类型
         out.writeByte(msg.getMessageType());
-        // 5. 4 个字节
-        out.writeInt(msg.getSequenceId());
+        // 5. 36个字节的请求序列号
+        out.writeBytes(msg.getSequenceId().getBytes(StandardCharsets.UTF_8));
         // 6、无意义，对齐填充
         out.writeByte(0);
         // 7. 根据指定的序列化方式去序列化
@@ -113,8 +119,9 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         byte serializerAlgorithm = in.readByte();
         // 4. 1 字节的指令类型
         byte messageType = in.readByte();
-        // 5. 4 个字节的请求序号
-        int sequenceId = in.readInt();
+        // 5. 36个字节的请求序列号
+        byte[] sequenceIdBytes = new byte[SEQUENCE_ID_LENGTH];
+        String sequenceId = in.readBytes(sequenceIdBytes).toString(StandardCharsets.UTF_8);
         // 6、无意义，对齐填充
         in.readByte();
         // 7. 长度
