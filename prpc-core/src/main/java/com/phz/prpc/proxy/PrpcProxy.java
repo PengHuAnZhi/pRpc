@@ -50,7 +50,6 @@ public class PrpcProxy implements InvocationHandler {
         int sequenceId = SequenceIdGenerator.nextId();
         RpcRequestMessage rpcRequestMessage = RpcRequestMessage
                 .builder()
-                .sequenceId(sequenceId)
                 .interfaceName(method.getDeclaringClass().getCanonicalName())
                 .methodName(method.getName())
                 .groupName(groupName)
@@ -58,6 +57,7 @@ public class PrpcProxy implements InvocationHandler {
                 .parameterTypes(method.getParameterTypes())
                 .parameterValue(args)
                 .build();
+        rpcRequestMessage.setSequenceId(sequenceId);
         NettyClient.getInstance().sendPrpcRequestMessage(rpcRequestMessage);
         //创建这次Rpc请求所需要的Promise对象用于接收结果
         Promise<Object> promise = new DefaultPromise<>(new DefaultEventLoop().next());
@@ -74,6 +74,7 @@ public class PrpcProxy implements InvocationHandler {
     /**
      * 根据被代理对象类型创建其代理类
      *
+     * @param <T>   被代理对象泛型
      * @param clazz 被代理对象的{@link Class}对象
      * @return T 返回代理对象
      **/

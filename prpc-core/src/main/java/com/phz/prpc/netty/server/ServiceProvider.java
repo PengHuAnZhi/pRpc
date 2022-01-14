@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022年01月11日 20:42
  */
 @Slf4j
-public class ServiceProvider {
+public final class ServiceProvider {
 
     /**
      * 以服务名为键维护所有的服务的{@link Class}对象
@@ -40,6 +40,9 @@ public class ServiceProvider {
      * {@code ServiceProviderHolder}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link ServiceProvider#getInstance()}方法，才会加载此内部类，然后创建唯一{@code Netty}服务端
      **/
     private static class ServiceProviderHolder {
+        /**
+         * 单例
+         **/
         private static final ServiceProvider INSTANCE = new ServiceProvider();
     }
 

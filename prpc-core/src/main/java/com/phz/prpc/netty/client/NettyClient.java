@@ -24,8 +24,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.channels.Selector;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2022年01月11日 9:38
  */
 @Slf4j
-public class NettyClient {
+public final class NettyClient {
     /**
      * {@code Netty}请求的启动类对象
      **/
@@ -81,11 +79,16 @@ public class NettyClient {
      * {@code Netty}请求客户端单例维护静态内部类
      **/
     private static class NettyClientHolder {
+        /**
+         * 单例对象
+         **/
         private static final NettyClient INSTANCE = new NettyClient();
     }
 
     /**
      * 公共的获取{@code Netty}请求客户端单例方法
+     *
+     * @return NettyClient 单例对象
      **/
     public static NettyClient getInstance() {
         return NettyClientHolder.INSTANCE;
@@ -143,8 +146,6 @@ public class NettyClient {
                 completableFuture.completeExceptionally(new PrpcException(ErrorMsg.CONNECT_INSTANCE_ERROR));
                 log.error("连接失败！");
             } else {
-                int reConnectTimes = 5 - reConnectNumber;
-                log.error(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()) + ": 连接失败，第" + reConnectTimes + "次重连……");
                 bootstrap.config().group().schedule(() -> {
                             doConnect(hostName, port, reConnectNumber - 1);
                         },

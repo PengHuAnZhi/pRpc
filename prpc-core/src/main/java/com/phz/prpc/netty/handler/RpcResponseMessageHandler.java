@@ -25,7 +25,7 @@ public class RpcResponseMessageHandler extends SimpleChannelInboundHandler<RpcRe
     /**
      * 因为服务端的方法调用结果不是立刻返回的，会有一定延迟，对于每一次发送的{@code rpc}请求消息都会生成一个唯一的消息{@code ID}，以此{@code ID}缓存所有用于接收响应的{@link Promise}对象
      **/
-    public final static Map<Integer, Promise<Object>> PROMISE_MAP = new ConcurrentHashMap<>();
+    public static final Map<Integer, Promise<Object>> PROMISE_MAP = new ConcurrentHashMap<>();
 
     /**
      * 读取{@code rpc}响应类型的消息并处理，此方法正常情况下应该是客户端方调用

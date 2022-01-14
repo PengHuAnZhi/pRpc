@@ -1,6 +1,9 @@
 package com.phz.prpc.netty.message;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * <p>
@@ -15,10 +18,6 @@ import lombok.*;
 @Builder
 @ToString(callSuper = true)
 public class RpcRequestMessage extends Message {
-    /**
-     * 请求序号
-     */
-    private int sequenceId;
     /**
      * 调用的接口全限定名，服务端根据它找到实现
      */

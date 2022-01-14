@@ -12,6 +12,7 @@ public interface Serializer {
     /**
      * 反序列化方法
      *
+     * @param <T>   原始对象泛型
      * @param clazz 因为{@code JDK}序列化出来的字节数组包含了原始对象信息，而其他的序列化算法便不都包含了，所以需要指定反序列化出来的对象是谁
      * @param bytes 字节数组
      * @return T 返回指定对象
@@ -21,6 +22,7 @@ public interface Serializer {
     /**
      * 序列化方法
      *
+     * @param <T>    原始对象泛型
      * @param object 待序列化对象
      * @return byte[] 返回序列化后的字节数组
      */

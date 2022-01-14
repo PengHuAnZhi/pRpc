@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * @date 2022年01月11日 20:17
  */
 @Slf4j
-public class NettyServer {
+public final class NettyServer {
     /**
      * 私有构造方法，禁用手动实例化
      **/
@@ -38,6 +38,9 @@ public class NettyServer {
      * {@code NettyServer}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link NettyServer#getInstance()}方法，才会加载此内部类，然后创建唯一{@code Netty}服务端
      **/
     private static class NettyServerHolder {
+        /**
+         * 单例
+         **/
         private static final NettyServer INSTANCE = new NettyServer();
     }
 

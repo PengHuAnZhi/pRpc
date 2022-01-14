@@ -8,13 +8,13 @@ import java.util.Map;
 /**
  * <p>
  * 客户端在发送请求的时候，首先会去服务注册中心去拉取可用服务，然后通过返回的服务主机名端口号尝试连接服务，连接完成后，将存入当前{@link ServerChannelPool}，以便维护与之连接的{@link Channel}
- * </p></br>
+ * </p><br></br>
  * <p>应当注意，当客户端下线后，应该将当前维护好的{@link Channel}注销关闭</p>
  *
  * @author PengHuanZhi
  * @date 2022年01月11日 17:24
  */
-public class ServerChannelPool {
+public final class ServerChannelPool {
 
     /**
      * 以{@code hostName:port}为键缓存当前客户端所连接的所有服务对应的通信{@link Channel}
@@ -31,6 +31,9 @@ public class ServerChannelPool {
      * {@link ServerChannelPool}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link ServerChannelPool#getInstance()}方法，才会加载此内部类，然后创建唯一{@link ServerChannelPool}
      **/
     private static class ServerChannelPoolHolder {
+        /**
+         * 单例对象
+         **/
         private static final ServerChannelPool INSTANCE = new ServerChannelPool();
     }
 

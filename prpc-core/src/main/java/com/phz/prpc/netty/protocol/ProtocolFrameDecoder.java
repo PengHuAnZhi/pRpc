@@ -11,12 +11,32 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
  * @date 2022年01月11日 12:23
  */
 public class ProtocolFrameDecoder extends LengthFieldBasedFrameDecoder {
+    /**
+     * 最长帧
+     **/
+    private static final Integer MAX_FRAME_LENGTH = 4096;
+    /**
+     * 长度字段偏移量
+     **/
+    private static final Integer LENGTH_FIELD_OFFSET = 12;
+    /**
+     * 长度字段长度
+     **/
+    private static final Integer LENGTH_FIELD_LENGTH = 4;
+    /**
+     * 长度字段为基准，还有几个字节是内容
+     **/
+    private static final Integer LENGTH_ADJUSTMENT = 0;
+    /**
+     * 从头剥离几个字节
+     **/
+    private static final Integer INITIAL_BYTES_TO_STRIP = 0;
 
     /**
      * 无参构造方法，直接初始化好帧解码器{@link LengthFieldBasedFrameDecoder}的各种参数
      **/
     public ProtocolFrameDecoder() {
-        this(4096, 12, 4, 0, 0);
+        this(MAX_FRAME_LENGTH, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH, LENGTH_ADJUSTMENT, INITIAL_BYTES_TO_STRIP);
     }
 
     /**

@@ -26,16 +26,16 @@ import java.util.Map;
  * @date 2022年01月09日 13:28
  */
 @Slf4j
-public class NacosRegistry {
+public final class NacosRegistry {
     /**
      * {@code Nacos}服务注册中心地址
      **/
-    private static String NACOS_SERVER_ADDRESS;
+    private static String nacosServerAddress;
 
     /**
      * {@code Nacos}命名服务
      **/
-    private static NamingService NAMING_SERVICE;
+    private static NamingService namingService;
 
     /**
      * 将所有的服务名缓存下来
@@ -47,12 +47,12 @@ public class NacosRegistry {
      **/
     private NacosRegistry() {
         try {
-            NACOS_SERVER_ADDRESS = SpringBeanUtil.getBean(PrpcProperties.class).getNacosAddress();
-            NAMING_SERVICE = NamingFactory.createNamingService(NACOS_SERVER_ADDRESS);
-            log.info("nacos服务连接成功:{}", NACOS_SERVER_ADDRESS);
+            nacosServerAddress = SpringBeanUtil.getBean(PrpcProperties.class).getNacosAddress();
+            namingService = NamingFactory.createNamingService(nacosServerAddress);
+            log.info("nacos服务连接成功:{}", nacosServerAddress);
         } catch (NacosException e) {
             e.printStackTrace();
-            log.error("nacos服务 {} 连接失败, 原因 : {}", NACOS_SERVER_ADDRESS, e.getErrMsg());
+            log.error("nacos服务 {} 连接失败, 原因 : {}", nacosServerAddress, e.getErrMsg());
             throw new PrpcException(ErrorMsg.CONNECT_FAILED);
         }
     }
@@ -61,6 +61,9 @@ public class NacosRegistry {
      * {@code Nacos}服务单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link NacosRegistry#getInstance()}方法，才会加载此内部类，然后创建唯一注册中心实例
      **/
     private static class NacosServerHolder {
+        /**
+         * 单例
+         **/
         private static final NacosRegistry INSTANCE = new NacosRegistry();
     }
 
@@ -83,7 +86,7 @@ public class NacosRegistry {
         String hostName = address.getHostString();
         int port = address.getPort();
         try {
-            NAMING_SERVICE.registerInstance(serviceName, hostName, port);
+            namingService.registerInstance(serviceName, hostName, port);
             SERVER_ADDRESS_MAP.put(serviceName, address);
             NettyServer.getInstance().start();
             log.info("实例 {} {} {} 注册成功", serviceName, hostName, port);
@@ -125,7 +128,7 @@ public class NacosRegistry {
      **/
     public void deRegisterService(String serviceName, String hostName, int port) {
         try {
-            NAMING_SERVICE.deregisterInstance(serviceName, hostName, port);
+            namingService.deregisterInstance(serviceName, hostName, port);
             SERVER_ADDRESS_MAP.remove(serviceName);
             log.info("实例 {} {} {} 下线", serviceName, hostName, port);
         } catch (NacosException e) {
@@ -142,7 +145,7 @@ public class NacosRegistry {
      **/
     public List<Instance> getInstances(String serviceName) {
         try {
-            return NAMING_SERVICE.getAllInstances(serviceName);
+            return namingService.getAllInstances(serviceName);
         } catch (NacosException e) {
             log.error("查询服务名为 {} 的实例出现错误，错误详情 : {}", serviceName, e.getErrMsg());
             throw new PrpcException(ErrorMsg.GET_INSTANCE_ERROR);

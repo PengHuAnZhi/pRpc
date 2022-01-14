@@ -1,13 +1,21 @@
 package com.phz.prpc.netty.serializer;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 
 /**
  * <p>
  * {@link Gson}序列化{@code Java}代码的时候，没有提供正确的类型转换器，需要我们自己实现。
- * </p></br>
+ * </p>
+ * <br></br>
  * <p>
  * 因为需要将{@link Class}和{@code json}互转，所以这里的泛型就用{@link Class}
  * </p>

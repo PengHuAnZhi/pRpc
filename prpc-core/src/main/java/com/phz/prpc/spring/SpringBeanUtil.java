@@ -45,6 +45,7 @@ public class SpringBeanUtil implements ApplicationContextAware {
     /**
      * 通过{@code Bean}名称以及{@link Class}对象从容器获取{@code Bean}
      *
+     * @param <T>   目标{@code Bean}的类型
      * @param name  {@code Bean}名称
      * @param clazz 目标{@code Bean}的{@link Class}对象
      * @return T 返回目标{@code Bean}
@@ -56,6 +57,7 @@ public class SpringBeanUtil implements ApplicationContextAware {
     /**
      * 通过{@link Class}对象从容器中获取{@code Bean}
      *
+     * @param <T>   目标{@code Bean}的类型
      * @param clazz 目标{@code Bean}的{@link Class}对象
      * @return T 返回目标{@code Bean}
      **/

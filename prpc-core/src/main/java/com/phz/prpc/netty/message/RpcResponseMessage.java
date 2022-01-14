@@ -17,10 +17,6 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class RpcResponseMessage extends Message {
     /**
-     * 请求序号
-     */
-    private int sequenceId;
-    /**
      * 返回值
      */
     private Object returnValue;

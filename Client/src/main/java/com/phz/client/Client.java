@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class Client {
-
+    /**
+     * 被代理的服务
+     **/
     @PrpcClient(groupName = "hello")
     private HelloService service;
 
