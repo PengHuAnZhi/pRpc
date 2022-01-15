@@ -4,6 +4,7 @@ prpc:
   nacosAddress: "localhost:8848"
   reConnectNumber: 5
   serializerAlgorithm: "JSON"
+  timeOut: 3000
 spring:
   cloud:
     nacos:

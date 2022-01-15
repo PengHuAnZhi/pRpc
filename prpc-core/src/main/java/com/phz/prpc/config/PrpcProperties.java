@@ -19,11 +19,11 @@ import org.springframework.stereotype.Component;
 @PropertySource("classpath:application.yml")
 public class PrpcProperties {
     /**
-     * {@code nacos}的地址
+     * {@code Nacos}的地址
      **/
     private String nacosAddress = "localhost:8848";
     /**
-     * {@code rpc}服务端口地址
+     * {@code Rpc}服务端口地址
      **/
     private Integer serverPort = 9908;
     /**
@@ -35,4 +35,9 @@ public class PrpcProperties {
      * 超时重连的情况
      **/
     private Integer reConnectNumber = 100;
+
+    /**
+     * {@code Rpc}请求超时事件
+     **/
+    private Integer timeOut = 2000;
 }

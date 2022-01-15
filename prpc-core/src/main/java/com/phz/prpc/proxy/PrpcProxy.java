@@ -1,10 +1,10 @@
 package com.phz.prpc.proxy;
 
-import com.phz.prpc.exception.ErrorMsg;
-import com.phz.prpc.exception.PrpcException;
+import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.netty.client.NettyClient;
 import com.phz.prpc.netty.handler.RpcResponseMessageHandler;
 import com.phz.prpc.netty.message.RpcRequestMessage;
+import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
@@ -45,6 +45,11 @@ public class PrpcProxy implements InvocationHandler {
     private static final NettyClient NETTY_CLIENT = NettyClient.getInstance();
 
     /**
+     * {@code Prpc配置类}
+     **/
+    private static final PrpcProperties PRPC_PROPERTIES = SpringBeanUtil.getBean(PrpcProperties.class);
+
+    /**
      * 真实的代理类所调用的方法
      *
      * @param proxy  要被代理的对象
@@ -71,18 +76,18 @@ public class PrpcProxy implements InvocationHandler {
         if (!flag) {
             return null;
         }
-        //创建这次Rpc请求所需要的Promise对象用于接收结果,TODO
+        //创建这次Rpc请求所需要的Promise对象用于接收结果
         Promise<Object> promise = new DefaultPromise<>(new DefaultEventLoop().next());
         //将当前Promise传送到响应处理类中的一个Map
         RpcResponseMessageHandler.putPromise(sequenceId, promise);
-        promise.await();
+        promise.await(PRPC_PROPERTIES.getTimeOut());
         if (promise.isSuccess()) {
             Object result = promise.getNow();
             log.info("方法{}调用成功,结果为:{}", methodName, result);
             return result;
         } else {
             log.error("方法{}调用失败,原因:{}", methodName, promise.cause());
-            throw new PrpcException(ErrorMsg.FAILED_INVOKE_METHOD);
+            return null;
         }
     }
 
