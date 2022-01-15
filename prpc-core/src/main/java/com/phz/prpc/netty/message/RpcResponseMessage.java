@@ -1,8 +1,6 @@
 package com.phz.prpc.netty.message;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * <p>
@@ -14,6 +12,8 @@ import lombok.ToString;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString(callSuper = true)
 public class RpcResponseMessage extends Message {
     /**
