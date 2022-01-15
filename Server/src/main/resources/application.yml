@@ -1,8 +1,8 @@
 server:
-  port: 8080
+  port: 8081
 prpc:
   nacosAddress: "localhost:8848"
-  serverPort: 9999
+  serverPort: 8888
   serializerAlgorithm: "JDK"
 
 spring:

@@ -14,10 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>
@@ -47,7 +47,7 @@ public final class NacosRegistry {
     /**
      * 将所有的服务名缓存下来
      **/
-    private static final Map<String, InetSocketAddress> SERVER_ADDRESS_MAP = new HashMap<>();
+    private static final Map<String, InetSocketAddress> SERVER_ADDRESS_MAP = new ConcurrentHashMap<>();
 
     /**
      * 私有构造方法，禁用手动实例化
@@ -147,7 +147,13 @@ public final class NacosRegistry {
         if (CollectionUtils.isEmpty(serviceInstances)) {
             return null;
         }
-        return prpcLoadBalancer.doChoice(serviceInstances);
+        Instance instance = prpcLoadBalancer.doChoice(serviceInstances);
+        if (instance.isHealthy()) {
+            return instance;
+        }
+        //如果在负载均衡算法选取服务的过程中有服务下线，需要重新选取
+        SERVER_ADDRESS_MAP.remove(serviceName);
+        return getServiceInstance(serviceName);
     }
 
     /**
