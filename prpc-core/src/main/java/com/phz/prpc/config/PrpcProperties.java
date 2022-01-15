@@ -45,4 +45,9 @@ public class PrpcProperties {
      * {@code Rpc}从注册中心拉取到可用服务后，使用何种负载均衡算法选择服务
      **/
     private String loadBalanceAlgorithm = "random";
+
+    /**
+     * 一致性{@code Hash} {@link com.phz.prpc.netty.loadBalance.LoadBalanceAlgorithm#consistentHash}需要配置此参数，表示虚拟节点数
+     **/
+    private Integer virtualNodeNum = 100;
 }

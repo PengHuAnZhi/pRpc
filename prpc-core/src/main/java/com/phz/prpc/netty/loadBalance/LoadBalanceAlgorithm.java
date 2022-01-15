@@ -1,5 +1,7 @@
 package com.phz.prpc.netty.loadBalance;
 
+import com.phz.prpc.config.PrpcProperties;
+import com.phz.prpc.spring.SpringBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
@@ -49,17 +51,18 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
         }
     },
     consistentHash {
-
         /**
          * 一致性哈希算法选择器
          **/
         private final ConcurrentHashMap<String, ConsistenceHashChooser> consistenceHashMap = new ConcurrentHashMap<>();
 
+        private final PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
+
         @Override
         public InetSocketAddress doChoice(List<InetSocketAddress> instances, String rpcServiceName) {
             ConsistenceHashChooser consistenceHashChooser = consistenceHashMap.get(rpcServiceName);
             if (consistenceHashChooser == null) {
-                consistenceHashChooser = new ConsistenceHashChooser(100, instances);
+                consistenceHashChooser = new ConsistenceHashChooser(prpcProperties.getVirtualNodeNum(), instances);
                 consistenceHashMap.put(rpcServiceName, consistenceHashChooser);
             }
             InetAddress localHost;

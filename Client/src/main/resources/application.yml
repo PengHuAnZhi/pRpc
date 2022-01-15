@@ -6,6 +6,7 @@ prpc:
   serializerAlgorithm: "FASTJSON"
   timeOut: 3000
   loadBalanceAlgorithm: "consistentHash"
+  virtualNodeNum: 100
 spring:
   cloud:
     nacos:
