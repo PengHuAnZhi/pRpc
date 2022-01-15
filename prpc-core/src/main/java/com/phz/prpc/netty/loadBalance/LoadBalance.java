@@ -1,5 +1,6 @@
 package com.phz.prpc.netty.loadBalance;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -17,5 +18,22 @@ public interface LoadBalance {
      * @param instances 实例集合
      * @return Object 返回其中一个实例
      **/
-    <T> Object doChoice(List<T> instances);
+    default InetSocketAddress doChoice(List<InetSocketAddress> instances) {
+        throw new UnsupportedOperationException("不支持此操作！");
+    }
+
+    /**
+     * 传入一个目标实例集合，并传入一个附加参数，部分负载均衡算法可能会需要，但不是每个都需要，所以预留此方法
+     *
+     * @param instances      实例集合
+     * @param extraParameter 附加参数
+     * @return Object 返回其中一个实例
+     **/
+    default InetSocketAddress doChoice(List<InetSocketAddress> instances, String extraParameter) {
+        if (extraParameter == null) {
+            return doChoice(instances);
+        } else {
+            throw new UnsupportedOperationException("不支持此操作！");
+        }
+    }
 }

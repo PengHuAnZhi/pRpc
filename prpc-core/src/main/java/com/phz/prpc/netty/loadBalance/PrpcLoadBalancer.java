@@ -1,12 +1,12 @@
 package com.phz.prpc.netty.loadBalance;
 
-import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.spring.SpringBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -48,17 +48,21 @@ public class PrpcLoadBalancer {
      * 使用负载均衡算法从服务集合中选取一个服务
      *
      * @param serviceInstances 服务集合
-     * @return Instance 选取的服务
+     * @param serviceName      服务名称
+     * @return InetSocketAddress 选取的服务
      **/
-    public Instance doChoice(List<Instance> serviceInstances) {
+    public InetSocketAddress doChoice(List<InetSocketAddress> serviceInstances, String serviceName) {
         String loadBalanceAlgorithm = prpcProperties.getLoadBalanceAlgorithm();
         LoadBalanceAlgorithm algorithm;
         try {
-            algorithm = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm.toUpperCase());
+            algorithm = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm);
         } catch (IllegalArgumentException e) {
             log.error("未知的负载均衡算法:{},异常信息为:{}", loadBalanceAlgorithm, e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_LOAD_BALANCE_ALGORITHM);
         }
-        return (Instance) algorithm.doChoice(serviceInstances);
+        if (algorithm == LoadBalanceAlgorithm.consistentHash) {
+            return algorithm.doChoice(serviceInstances, serviceName);
+        }
+        return algorithm.doChoice(serviceInstances);
     }
 }

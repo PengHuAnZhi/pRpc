@@ -1,6 +1,5 @@
 package com.phz.prpc.netty.client;
 
-import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
@@ -26,6 +25,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
 import java.nio.channels.Selector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -223,13 +223,13 @@ public final class NettyClient {
      * @return boolean 返回消息是否发送成功
      **/
     public boolean sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
-        Instance instance = nacosRegistry.getServiceInstance(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
-        if (instance == null) {
+        InetSocketAddress address = nacosRegistry.getServiceInstance(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
+        if (address == null) {
             log.error("没有可用实例");
             return false;
         }
-        String ip = instance.getIp();
-        int port = instance.getPort();
+        String ip = address.getHostName();
+        int port = address.getPort();
         Channel prpcChannel = getPrpcChannel(ip, port);
         log.info("客户端向 {}:{} 发送消息:{}", ip, port, requestMessage);
         prpcChannel.writeAndFlush(requestMessage);

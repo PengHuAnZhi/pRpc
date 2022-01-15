@@ -3,9 +3,11 @@ package com.phz.prpc.netty.loadBalance;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author PengHuanZhi
@@ -16,34 +18,58 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
     /**
      * 随机法
      **/
-    RANDOM {
+    random {
         @Override
-        public <T> Object doChoice(List<T> instances) {
+        public InetSocketAddress doChoice(List<InetSocketAddress> instances) {
             return instances.get(new Random().nextInt(instances.size()));
         }
     },
-    POLLING {
+    polling {
         /**
          * 轮询下标
          **/
         private int index = 0;
 
         @Override
-        public <T> Object doChoice(List<T> instances) {
+        public InetSocketAddress doChoice(List<InetSocketAddress> instances) {
             return instances.get(index++ % instances.size());
         }
     },
-    HASH {
+    hash {
         @Override
-        public <T> Object doChoice(List<T> instances) {
+        public InetSocketAddress doChoice(List<InetSocketAddress> instances) {
             try {
                 InetAddress localHost = InetAddress.getLocalHost();
-                int ipHash = localHost.hashCode();
-                return instances.get(ipHash + 1 % instances.size());
+                int ipHash = FNV1_32_HASH.getHash(localHost.getHostAddress());
+                return instances.get((ipHash + 1) % instances.size());
             } catch (UnknownHostException e) {
                 log.error("源地址hash失败，原因:{}", e.getMessage());
                 return null;
             }
+        }
+    },
+    consistentHash {
+
+        /**
+         * 一致性哈希算法选择器
+         **/
+        private final ConcurrentHashMap<String, ConsistenceHashChooser> consistenceHashMap = new ConcurrentHashMap<>();
+
+        @Override
+        public InetSocketAddress doChoice(List<InetSocketAddress> instances, String rpcServiceName) {
+            ConsistenceHashChooser consistenceHashChooser = consistenceHashMap.get(rpcServiceName);
+            if (consistenceHashChooser == null) {
+                consistenceHashChooser = new ConsistenceHashChooser(100, instances);
+                consistenceHashMap.put(rpcServiceName, consistenceHashChooser);
+            }
+            InetAddress localHost;
+            try {
+                localHost = InetAddress.getLocalHost();
+            } catch (UnknownHostException e) {
+                log.error("获取本机Ip失败，原因:{}", e.getMessage());
+                return null;
+            }
+            return consistenceHashChooser.getServer(localHost.getHostAddress());
         }
     }
 }

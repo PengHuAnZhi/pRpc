@@ -5,7 +5,7 @@ prpc:
   reConnectNumber: 5
   serializerAlgorithm: "FASTJSON"
   timeOut: 3000
-  loadBalanceAlgorithm: "hash"
+  loadBalanceAlgorithm: "consistentHash"
 spring:
   cloud:
     nacos:

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public final class NacosRegistry {
     /**
      * 将所有的服务名缓存下来
      **/
-    private static final Map<String, InetSocketAddress> SERVER_ADDRESS_MAP = new ConcurrentHashMap<>();
+    private static final Map<String, List<InetSocketAddress>> SERVER_ADDRESS_MAP = new ConcurrentHashMap<>();
 
     /**
      * 私有构造方法，禁用手动实例化
@@ -95,7 +96,8 @@ public final class NacosRegistry {
         int port = address.getPort();
         try {
             namingService.registerInstance(serviceName, hostName, port);
-            SERVER_ADDRESS_MAP.put(serviceName, address);
+            List<InetSocketAddress> inetSocketAddressList = SERVER_ADDRESS_MAP.computeIfAbsent(serviceName, k -> new ArrayList<>());
+            inetSocketAddressList.add(address);
             NettyServer.getInstance().start();
             log.info("实例 {} {} {} 注册成功", serviceName, hostName, port);
         } catch (NacosException e) {
@@ -107,12 +109,12 @@ public final class NacosRegistry {
      * 移除所有的服务实例
      **/
     public void deRegisterAllService() {
-        Iterator<Map.Entry<String, InetSocketAddress>> iterator = SERVER_ADDRESS_MAP.entrySet().iterator();
+        Iterator<Map.Entry<String, List<InetSocketAddress>>> iterator = SERVER_ADDRESS_MAP.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, InetSocketAddress> entry = iterator.next();
+            Map.Entry<String, List<InetSocketAddress>> entry = iterator.next();
             String serviceName = entry.getKey();
-            InetSocketAddress address = entry.getValue();
-            deRegisterService(serviceName, address.getHostString(), address.getPort());
+            List<InetSocketAddress> addresses = entry.getValue();
+            addresses.forEach(address -> deRegisterService(serviceName, address.getHostString(), address.getPort()));
             iterator.remove();
         }
     }
@@ -140,20 +142,14 @@ public final class NacosRegistry {
      * 使用负载均衡算法获取可提供的服务实例{@link Instance}
      *
      * @param serviceName 需要获取的服务名称
-     * @return Instance 可提供服务的实例，可能为空
+     * @return InetSocketAddress 可提供服务的实例
      **/
-    public Instance getServiceInstance(String serviceName) {
-        List<Instance> serviceInstances = getServiceInstances(serviceName);
+    public InetSocketAddress getServiceInstance(String serviceName) {
+        List<InetSocketAddress> serviceInstances = getServiceInstances(serviceName);
         if (CollectionUtils.isEmpty(serviceInstances)) {
             return null;
         }
-        Instance instance = prpcLoadBalancer.doChoice(serviceInstances);
-        if (instance.isHealthy()) {
-            return instance;
-        }
-        //如果在负载均衡算法选取服务的过程中有服务下线，需要重新选取
-        SERVER_ADDRESS_MAP.remove(serviceName);
-        return getServiceInstance(serviceName);
+        return prpcLoadBalancer.doChoice(serviceInstances, serviceName);
     }
 
     /**
@@ -162,9 +158,11 @@ public final class NacosRegistry {
      * @param serviceName 服务名称
      * @return List<Instance>  实例集合
      **/
-    private List<Instance> getServiceInstances(String serviceName) {
+    private List<InetSocketAddress> getServiceInstances(String serviceName) {
         try {
-            return namingService.getAllInstances(serviceName);
+            List<InetSocketAddress> instances = new ArrayList<>();
+            namingService.getAllInstances(serviceName).forEach(instance -> instances.add(new InetSocketAddress(instance.getIp(), instance.getPort())));
+            return instances;
         } catch (NacosException e) {
             log.error("查询服务名为 {} 的实例出现错误，错误详情 : {}", serviceName, e.getErrMsg());
             throw new PrpcException(ErrorMsg.GET_INSTANCE_ERROR);
