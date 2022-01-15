@@ -6,11 +6,7 @@ import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
@@ -139,6 +135,17 @@ public enum SerializerAlgorithm implements Serializer {
         @Override
         public <T> byte[] serialize(T object) {
             return JSON.toJSONBytes(object);
+        }
+    },
+    KYRO {
+        @Override
+        public <T> Object deserialize(Class<T> clazz, byte[] bytes) {
+            return KryoSerializer.readFromByteArray(bytes);
+        }
+
+        @Override
+        public <T> byte[] serialize(T object) {
+            return KryoSerializer.writeToByteArray(object);
         }
     }
 }

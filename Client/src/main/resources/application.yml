@@ -3,7 +3,7 @@ server:
 prpc:
   nacosAddress: "localhost:8848"
   reConnectNumber: 5
-  serializerAlgorithm: "FASTJSON"
+  serializerAlgorithm: "KYRO"
   timeOut: 3000
   loadBalanceAlgorithm: "consistentHash"
   virtualNodeNum: 100
