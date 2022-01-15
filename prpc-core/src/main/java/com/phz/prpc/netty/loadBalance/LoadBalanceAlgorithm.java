@@ -1,7 +1,5 @@
 package com.phz.prpc.netty.loadBalance;
 
-import org.springframework.util.CollectionUtils;
-
 import java.util.List;
 import java.util.Random;
 
@@ -16,12 +14,18 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
     RANDOM {
         @Override
         public <T> Object doChoice(List<T> instances) {
-            if (CollectionUtils.isEmpty(instances)) {
-                return null;
-            } else if (instances.size() == 1) {
-                return instances.get(0);
-            }
             return instances.get(new Random().nextInt(instances.size()));
+        }
+    },
+    POLLING {
+        /**
+         * 轮询下标
+         **/
+        private int index = 0;
+
+        @Override
+        public <T> Object doChoice(List<T> instances) {
+            return instances.get(index++ % instances.size());
         }
     }
 }

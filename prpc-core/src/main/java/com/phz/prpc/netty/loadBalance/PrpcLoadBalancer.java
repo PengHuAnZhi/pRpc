@@ -44,6 +44,12 @@ public class PrpcLoadBalancer {
         return PrpcLoadBalanceHolder.INSTANCE;
     }
 
+    /**
+     * 使用负载均衡算法从服务集合中选取一个服务
+     *
+     * @param serviceInstances 服务集合
+     * @return Instance 选取的服务
+     **/
     public Instance doChoice(List<Instance> serviceInstances) {
         String loadBalanceAlgorithm = prpcProperties.getLoadBalanceAlgorithm();
         LoadBalanceAlgorithm algorithm;
