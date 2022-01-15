@@ -4,6 +4,7 @@ import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.netty.handler.RpcRequestMessageHandler;
 import com.phz.prpc.netty.protocol.MessageCodecSharable;
 import com.phz.prpc.netty.protocol.ProtocolFrameDecoder;
+import com.phz.prpc.registry.NacosRegistry;
 import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -38,12 +39,15 @@ public final class NettyServer {
      **/
     private static EventLoopGroup worker;
 
+    private static NacosRegistry nacosRegistry;
+
     /**
      * 私有构造方法，禁用手动实例化
      **/
     private NettyServer() {
         boss = new NioEventLoopGroup(1);
         worker = new NioEventLoopGroup();
+        nacosRegistry = NacosRegistry.getInstance();
     }
 
     /**
@@ -131,6 +135,7 @@ public final class NettyServer {
         closeFuture.addListener((ChannelFutureListener) future -> {
             boss.shutdownGracefully();
             worker.shutdownGracefully();
+            nacosRegistry.deRegisterAllService();
         });
     }
 }

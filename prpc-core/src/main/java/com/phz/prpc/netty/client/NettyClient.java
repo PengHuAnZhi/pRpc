@@ -25,10 +25,8 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 
 import java.nio.channels.Selector;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -225,13 +223,11 @@ public final class NettyClient {
      * @return boolean 返回消息是否发送成功
      **/
     public boolean sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
-        List<Instance> instances = nacosRegistry.getInstances(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
-        if (CollectionUtils.isEmpty(instances)) {
+        Instance instance = nacosRegistry.getServiceInstance(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
+        if (instance == null) {
             log.error("没有可用实例");
             return false;
         }
-        //TODO 负载均衡
-        Instance instance = instances.get(0);
         String ip = instance.getIp();
         int port = instance.getPort();
         Channel prpcChannel = getPrpcChannel(ip, port);

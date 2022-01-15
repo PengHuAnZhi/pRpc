@@ -40,4 +40,9 @@ public class PrpcProperties {
      * {@code Rpc}请求超时事件
      **/
     private Integer timeOut = 2000;
+
+    /**
+     * {@code Rpc}从注册中心拉取到可用服务后，使用何种负载均衡算法选择服务
+     **/
+    private String loadBalanceAlgorithm = "random";
 }

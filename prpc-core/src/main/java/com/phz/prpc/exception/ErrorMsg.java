@@ -65,7 +65,12 @@ public enum ErrorMsg {
     /**
      * 没有可用实例
      **/
-    NO_MORE_INSTANCE("没有可用实例");
+    NO_MORE_INSTANCE("没有可用实例"),
+
+    /**
+     * 未知的负载均衡算法
+     **/
+    UNKNOWN_LOAD_BALANCE_ALGORITHM("未知的负载均衡算法");
 
     /**
      * 错误信息

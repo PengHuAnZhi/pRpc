@@ -1,6 +1,9 @@
 package com.phz.server;
 
 import com.phz.prpc.annotation.PrpcServer;
+import org.springframework.core.env.Environment;
+
+import javax.annotation.Resource;
 
 /**
  * @author PengHuanZhi
@@ -8,8 +11,12 @@ import com.phz.prpc.annotation.PrpcServer;
  */
 @PrpcServer(groupName = "hello")
 public class HelloServiceImpl implements HelloService {
+
+    @Resource
+    Environment environment;
+
     @Override
     public String hello(String value) {
-        return "你好" + value;
+        return "你好:" + value + "(来自" + environment.getProperty("local.server.port") + ")";
     }
 }

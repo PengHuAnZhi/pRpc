@@ -5,11 +5,13 @@ import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.phz.prpc.config.PrpcProperties;
-import com.phz.prpc.spring.SpringBeanUtil;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
+import com.phz.prpc.netty.loadBalance.PrpcLoadBalancer;
 import com.phz.prpc.netty.server.NettyServer;
+import com.phz.prpc.spring.SpringBeanUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -38,6 +40,11 @@ public final class NacosRegistry {
     private static NamingService namingService;
 
     /**
+     * 负载均衡器
+     **/
+    private static PrpcLoadBalancer prpcLoadBalancer;
+
+    /**
      * 将所有的服务名缓存下来
      **/
     private static final Map<String, InetSocketAddress> SERVER_ADDRESS_MAP = new HashMap<>();
@@ -49,6 +56,7 @@ public final class NacosRegistry {
         try {
             nacosServerAddress = SpringBeanUtil.getBean(PrpcProperties.class).getNacosAddress();
             namingService = NamingFactory.createNamingService(nacosServerAddress);
+            prpcLoadBalancer = PrpcLoadBalancer.getInstance();
             log.info("nacos服务连接成功:{}", nacosServerAddress);
         } catch (NacosException e) {
             e.printStackTrace();
@@ -96,16 +104,6 @@ public final class NacosRegistry {
     }
 
     /**
-     * 远程服务下线
-     *
-     * @param serviceName 服务名称
-     * @param address     服务地址
-     **/
-    public void deRegisterService(String serviceName, InetSocketAddress address) {
-        deRegisterService(serviceName, address.getHostString(), address.getPort());
-    }
-
-    /**
      * 移除所有的服务实例
      **/
     public void deRegisterAllService() {
@@ -137,13 +135,28 @@ public final class NacosRegistry {
         }
     }
 
+
+    /**
+     * 使用负载均衡算法获取可提供的服务实例{@link Instance}
+     *
+     * @param serviceName 需要获取的服务名称
+     * @return Instance 可提供服务的实例，可能为空
+     **/
+    public Instance getServiceInstance(String serviceName) {
+        List<Instance> serviceInstances = getServiceInstances(serviceName);
+        if (CollectionUtils.isEmpty(serviceInstances)) {
+            return null;
+        }
+        return prpcLoadBalancer.doChoice(serviceInstances);
+    }
+
     /**
      * 根据服务名称查询下方所有的实例
      *
      * @param serviceName 服务名称
      * @return List<Instance>  实例集合
      **/
-    public List<Instance> getInstances(String serviceName) {
+    private List<Instance> getServiceInstances(String serviceName) {
         try {
             return namingService.getAllInstances(serviceName);
         } catch (NacosException e) {

@@ -63,13 +63,12 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         String serializerAlgorithm = PRPC_PROPERTIES.getSerializerAlgorithm();
         SerializerAlgorithm algorithm;
         try {
-            algorithm = SerializerAlgorithm.valueOf(serializerAlgorithm);
+            algorithm = SerializerAlgorithm.valueOf(serializerAlgorithm.toUpperCase());
             log.info("{} 发送消息的序列化算法为:{}", ctx.channel().localAddress(), serializerAlgorithm);
         } catch (IllegalArgumentException e) {
             log.error("未知的序列化算法:{},异常信息为:{}", serializerAlgorithm, e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_SERIALIZER_ALGORITHM);
         }
-        //默认JSON
         int ordinal = algorithm.ordinal();
         ByteBuf out = ctx.alloc().buffer();
         // 1. 4 字节的魔数
