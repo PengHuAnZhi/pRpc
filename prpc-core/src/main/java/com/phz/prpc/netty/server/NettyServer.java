@@ -39,6 +39,9 @@ public final class NettyServer {
      **/
     private static EventLoopGroup worker;
 
+    /**
+     * Nacos服务工具类
+     **/
     private static NacosRegistry nacosRegistry;
 
     /**

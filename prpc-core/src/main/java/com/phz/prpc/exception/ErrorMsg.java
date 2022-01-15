@@ -70,7 +70,15 @@ public enum ErrorMsg {
     /**
      * 未知的负载均衡算法
      **/
-    UNKNOWN_LOAD_BALANCE_ALGORITHM("未知的负载均衡算法");
+    UNKNOWN_LOAD_BALANCE_ALGORITHM("未知的负载均衡算法"),
+    /**
+     * Hessian反序列化异常
+     **/
+    HESSIAN_DESERIALIZE_FAILED("Hessian反序列化异常"),
+    /**
+     * Hessian序列化异常
+     **/
+    HESSIAN_SERIALIZE_FAILED("Hessian序列化异常");
 
     /**
      * 错误信息

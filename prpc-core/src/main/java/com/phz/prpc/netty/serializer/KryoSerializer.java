@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class KryoSerializer {
     /**
-     * 每个线程的 Kryo 实例
+     * 每个线程的  {@link Kryo} 实例
      **/
     private static final ThreadLocal<Kryo> KRYO_LOCAL = ThreadLocal.withInitial(() -> {
         Kryo kryo = new Kryo();
@@ -47,9 +47,9 @@ public class KryoSerializer {
     });
 
     /**
-     * 获得当前线程的 Kryo 实例
+     * 获得当前线程的  {@link Kryo} 实例
      *
-     * @return 当前线程的 Kryo 实例
+     * @return 当前线程的 {@link Kryo} 实例
      */
     public static Kryo getInstance() {
         return KRYO_LOCAL.get();
@@ -72,8 +72,8 @@ public class KryoSerializer {
     }
 
     /**
-     * 将对象【及类型】序列化为 String
-     * 利用了 Base64 编码
+     * 将对象【及类型】序列化为 {@link String}
+     * 利用了 {@link Base64} 编码
      *
      * @param obj 任意对象
      * @return 序列化后的字符串
@@ -97,10 +97,10 @@ public class KryoSerializer {
     }
 
     /**
-     * 将 String 反序列化为原对象
-     * 利用了 Base64 编码
+     * 将 {@link String} 反序列化为原对象
+     * 利用了 {@link Base64} 编码
      *
-     * @param str writeToString 方法序列化后的字符串
+     * @param str {@link KryoSerializer#writeToString} 方法序列化后的字符串
      * @return 原对象
      */
     public static Object readFromString(String str) {
