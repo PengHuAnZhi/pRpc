@@ -40,6 +40,11 @@ public class PrpcProxy implements InvocationHandler {
     private String groupName;
 
     /**
+     * 客户端{@code Netty Rpc}请求实例{@link NettyClient}
+     **/
+    private static final NettyClient NETTY_CLIENT = NettyClient.getInstance();
+
+    /**
      * 真实的代理类所调用的方法
      *
      * @param proxy  要被代理的对象
@@ -62,7 +67,7 @@ public class PrpcProxy implements InvocationHandler {
                 .parameterValue(args)
                 .build();
         rpcRequestMessage.setSequenceId(sequenceId);
-        boolean flag = NettyClient.getInstance().sendPrpcRequestMessage(rpcRequestMessage);
+        boolean flag = NETTY_CLIENT.sendPrpcRequestMessage(rpcRequestMessage);
         if (!flag) {
             return null;
         }

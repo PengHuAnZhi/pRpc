@@ -23,12 +23,12 @@ public final class ServiceProvider {
     /**
      * 以服务名为键维护所有的服务的{@link Class}对象
      **/
-    private final Map<String, Class<?>> serviceMap = new ConcurrentHashMap<>();
+    private final Map<String, Object> serviceMap = new ConcurrentHashMap<>();
 
     /**
-     * 以服务的{@link Class}对象为键维护所有的服务实例
+     * {@link NacosRegistry} {@code Nacos}服务注册中心
      **/
-    private final Map<Class<?>, Object> serviceInstanceMap = new ConcurrentHashMap<>();
+    private final NacosRegistry nacosRegistry = NacosRegistry.getInstance();
 
     /**
      * 私有构造方法，禁用手动实例化
@@ -37,7 +37,7 @@ public final class ServiceProvider {
     }
 
     /**
-     * {@code ServiceProviderHolder}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link ServiceProvider#getInstance()}方法，才会加载此内部类，然后创建唯一{@code Netty}服务端
+     * {@code ServiceProviderHolder}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link ServiceProvider#getInstance()}方法，才会加载此内部类，然后创建唯一{@link ServiceProvider}服务端
      **/
     private static class ServiceProviderHolder {
         /**
@@ -63,41 +63,22 @@ public final class ServiceProvider {
      * @param port        端口号
      * @param service     服务类
      **/
-    public void publishService(String serviceName, String hostName, int port, Class<?> service) {
-        try {
-            serviceMap.put(serviceName, service);
-            serviceInstanceMap.put(service, service.newInstance());
-            NacosRegistry.getInstance().registerService(serviceName, new InetSocketAddress(hostName, port));
-        } catch (InstantiationException | IllegalAccessException e) {
-            log.error("服务初始化失败");
-        }
+    public void publishService(String serviceName, String hostName, int port, Object service) {
+        serviceMap.put(serviceName, service);
+        nacosRegistry.registerService(serviceName, new InetSocketAddress(hostName, port));
     }
 
     /**
-     * 通过服务名获取提供服务的{@link Class}对象
+     * 通过服务名获取提供服务的实例对象
      *
      * @param serviceName 服务名
-     * @return Class<?> {@link Class}对象
+     * @return Object {@link com.phz.prpc.annotation.PrpcServer}所发布的服务实例
      **/
-    public Class<?> getService(String serviceName) {
-        Class<?> aClass = serviceMap.get(serviceName);
-        if (aClass == null) {
+    public Object getService(String serviceName) {
+        Object service = serviceMap.get(serviceName);
+        if (service == null) {
             throw new PrpcException(ErrorMsg.SERVER_NOT_FOUND);
         }
-        return aClass;
-    }
-
-    /**
-     * 通过服务的{@link Class}对象拿到可以提供服务的对象
-     *
-     * @param clazz 可提供服务的{@link Class}对象
-     * @return Object 返回可以提供服务的对象
-     **/
-    public Object getServiceInstance(Class<?> clazz) {
-        Object object = serviceInstanceMap.get(clazz);
-        if (object == null) {
-            throw new PrpcException(ErrorMsg.SERVER_NOT_FOUND);
-        }
-        return object;
+        return service;
     }
 }

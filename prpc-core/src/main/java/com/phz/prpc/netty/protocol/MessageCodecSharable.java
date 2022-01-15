@@ -10,7 +10,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
-import io.netty.util.internal.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
@@ -35,12 +34,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     /**
      * 读取配置文件的类{@link PrpcProperties}
      **/
-    private final PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
-
-    /**
-     * 默认序列化算法为JSON
-     **/
-    private static final String DEFAULT_SERIALIZER_ALGORITHM = "JSON";
+    private static final PrpcProperties PRPC_PROPERTIES = SpringBeanUtil.getBean(PrpcProperties.class);
 
     /**
      * 魔数，判断是否无效数据包
@@ -48,9 +42,14 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     private static final byte[] MAGIC_NUMBER = new byte[]{1, 2, 3, 4};
 
     /**
-     * 请求序列号{@link Message#sequenceId}字节数组长度
+     * 请求序列号{@link Message#getSequenceId()}字节数组长度
      **/
     private static final int SEQUENCE_ID_LENGTH = 36;
+
+    /**
+     * 版本号
+     **/
+    private static final byte VERSION = 1;
 
     /**
      * 将明文按照自己的协议编码
@@ -61,10 +60,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
      **/
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> outList) {
-        String serializerAlgorithm = prpcProperties.getSerializerAlgorithm();
-        if (StringUtil.isNullOrEmpty(serializerAlgorithm)) {
-            serializerAlgorithm = DEFAULT_SERIALIZER_ALGORITHM;
-        }
+        String serializerAlgorithm = PRPC_PROPERTIES.getSerializerAlgorithm();
         SerializerAlgorithm algorithm;
         try {
             algorithm = SerializerAlgorithm.valueOf(serializerAlgorithm);
@@ -79,21 +75,25 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 1. 4 字节的魔数
         out.writeBytes(MAGIC_NUMBER);
         // 2. 1 字节的版本
-        out.writeByte(1);
+        out.writeByte(VERSION);
         // 3. 1 字节的序列化方式 枚举类ordinal()方法可以获取下标，也是从0开始的
         out.writeByte(ordinal);
         // 4. 1 字节的指令类型
-        out.writeByte(msg.getMessageType());
+        int messageType = msg.getMessageType();
+        out.writeByte(messageType);
         // 5. 36个字节的请求序列号
-        out.writeBytes(msg.getSequenceId().getBytes(StandardCharsets.UTF_8));
+        byte[] sequenceId = msg.getSequenceId().getBytes(StandardCharsets.UTF_8);
+        out.writeBytes(sequenceId);
         // 6、无意义，对齐填充
         out.writeByte(0);
         // 7. 根据指定的序列化方式去序列化
         byte[] message = algorithm.serialize(msg);
         // 8. 长度
-        out.writeInt(message.length);
+        int length = message.length;
+        out.writeInt(length);
         // 9. 写入内容
         out.writeBytes(message);
+        log.info("编码：magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}", MAGIC_NUMBER, VERSION, algorithm, messageType, sequenceId, length);
         outList.add(out);
     }
 
@@ -121,7 +121,8 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         byte messageType = in.readByte();
         // 5. 36个字节的请求序列号
         byte[] sequenceIdBytes = new byte[SEQUENCE_ID_LENGTH];
-        String sequenceId = in.readBytes(sequenceIdBytes).toString(StandardCharsets.UTF_8);
+        in.readBytes(sequenceIdBytes);
+        String sequenceId = new String(sequenceIdBytes, (StandardCharsets.UTF_8));
         // 6、无意义，对齐填充
         in.readByte();
         // 7. 长度
@@ -140,7 +141,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 确定具体消息类型
         Class<? extends Message> messageClass = Message.getMessageClass(messageType);
         Message message = (Message) algorithm.deserialize(messageClass, bytes);
-        log.info("magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}", magicNum, version, serializerAlgorithm, messageType, sequenceId, length);
+        log.info("解码：magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}", magicNum, version, algorithm, messageType, sequenceId, length);
         outList.add(message);
     }
 }

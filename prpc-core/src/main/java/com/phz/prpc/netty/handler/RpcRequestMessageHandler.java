@@ -38,11 +38,11 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
         rpcResponseMessage.setSequenceId(msg.getSequenceId());
         String methodName = msg.getMethodName();
         String serviceName = msg.getInterfaceName() + ":" + msg.getGroupName();
-        //服务提供类根据服务名选取已注册的服务class对象
-        Class<?> clazz = serviceProvider.getService(serviceName);
+        //服务提供类根据服务名选取已注册的服务对象
+        Object service = serviceProvider.getService(serviceName);
         Method method;
         try {
-            method = clazz.getMethod(methodName, msg.getParameterTypes());
+            method = service.getClass().getMethod(methodName, msg.getParameterTypes());
         } catch (NoSuchMethodException e) {
             log.error("方法{}不存在", methodName);
             rpcResponseMessage.setExceptionValue(e);
@@ -51,7 +51,7 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
         }
         Object result;
         try {
-            result = method.invoke(serviceProvider.getServiceInstance(clazz), msg.getParameterValue());
+            result = method.invoke(service, msg.getParameterValue());
         } catch (IllegalAccessException | InvocationTargetException e) {
             log.error("方法{}调用失败", methodName);
             rpcResponseMessage.setExceptionValue(e);

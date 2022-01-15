@@ -42,6 +42,11 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
     private PrpcProperties prpcProperties;
 
     /**
+     * {@link ServiceProvider} 所有可以提供{@code Rpc}服务的实例都需要发布到注册中心
+     **/
+    private final ServiceProvider serviceProvider = ServiceProvider.getInstance();
+
+    /**
      * 实例化{@code Bean}前，校验当前{@code Bean}是否被{@link PrpcServer}注解标注，来决定是否将当前{@code Bean}注册为一个{@code Bean}服务
      *
      * @param bean     {@code Bean}对象
@@ -62,7 +67,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
                 int port = prpcProperties.getServerPort();
                 InetSocketAddress address = new InetSocketAddress(host, port);
                 //向注册中心注册服务
-                ServiceProvider.getInstance().publishService(prpcServiceName, address.getHostName(), address.getPort(), bean.getClass());
+                serviceProvider.publishService(prpcServiceName, address.getHostName(), address.getPort(), bean);
             } catch (UnknownHostException e) {
                 log.error("获取本机ip失败");
             }

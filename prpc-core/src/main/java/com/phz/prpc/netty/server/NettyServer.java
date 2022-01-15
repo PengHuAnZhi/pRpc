@@ -97,7 +97,7 @@ public final class NettyServer {
                              * 用来触发特殊事件
                              **/
                             @Override
-                            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+                            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
                                 if (evt instanceof IdleStateEvent) {
                                     IdleStateEvent event = (IdleStateEvent) evt;
                                     // 触发了读空闲事件
@@ -107,6 +107,8 @@ public final class NettyServer {
                                             ctx.channel().close();
                                         }
                                     }
+                                } else {
+                                    super.userEventTriggered(ctx, evt);
                                 }
                             }
 

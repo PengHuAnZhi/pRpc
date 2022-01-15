@@ -21,18 +21,18 @@ public class PrpcProperties {
     /**
      * {@code nacos}的地址
      **/
-    private String nacosAddress;
+    private String nacosAddress = "localhost:8848";
     /**
      * {@code rpc}服务端口地址
      **/
-    private Integer serverPort;
+    private Integer serverPort = 9908;
     /**
      * 序列化算法
      **/
-    private String serializerAlgorithm;
+    private String serializerAlgorithm = "JSON";
 
     /**
      * 超时重连的情况
      **/
-    private Integer reConnectNumber;
+    private Integer reConnectNumber = 100;
 }

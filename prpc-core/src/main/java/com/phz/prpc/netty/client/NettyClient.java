@@ -54,24 +54,30 @@ public final class NettyClient {
      * {@code Netty}请求事件循环组，默认循环对象数为当前系统核心数*2，其中一个事件循环对象可以理解为一个单线程的线程池+{@link Selector}
      **/
     private final NioEventLoopGroup group;
+    /**
+     * {@code Nacos}服务注册工具类
+     **/
+    private final NacosRegistry nacosRegistry;
 
     /**
-     * 默认重连次数为5
+     * {@code Prpc}配置类
      **/
-    private static final int DEFAULT_RECONNECT_NUMBER = 5;
+    private final PrpcProperties prpcProperties;
 
     /**
      * 私有构造方法，禁用手动实例化<br>
      * 第一次加载会将{@link ServerChannelPool }单例取出赋值到当前类属性，然后创建一个{@link NioEventLoopGroup}，最后使用这个请求事件循环组创建好一个{@code Netty}网络请求对象
      **/
     private NettyClient() {
+        nacosRegistry = NacosRegistry.getInstance();
+        prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
         serverChannelPool = ServerChannelPool.getInstance();
         group = new NioEventLoopGroup();
         LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
         MessageCodecSharable messageCodecSharable = new MessageCodecSharable();
         RpcResponseMessageHandler rpcResponseMessageHandler = new RpcResponseMessageHandler();
-        bootstrap = new Bootstrap();
-        bootstrap.group(group)
+        bootstrap = new Bootstrap()
+                .group(group)
                 .channel(NioSocketChannel.class)
                 //是否开启 TCP 底层心跳机制
                 .option(ChannelOption.SO_KEEPALIVE, true)
@@ -90,7 +96,7 @@ public final class NettyClient {
                              * 用来触发特殊事件
                              **/
                             @Override
-                            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+                            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
                                 if (evt instanceof IdleStateEvent) {
                                     IdleStateEvent event = (IdleStateEvent) evt;
                                     // 触发了写空闲事件
@@ -100,6 +106,8 @@ public final class NettyClient {
                                     }
                                 } else if (evt instanceof ChannelInputShutdownEvent) {
                                     log.info("一个连接的远端关闭");
+                                } else {
+                                    super.userEventTriggered(ctx, evt);
                                 }
                             }
 
@@ -170,11 +178,7 @@ public final class NettyClient {
      * @return Channel 目标服务的{@link Channel}
      **/
     private Channel doConnect(String hostName, int port) {
-        PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
         Integer reConnectNumber = prpcProperties.getReConnectNumber();
-        if (reConnectNumber == null) {
-            return doConnect(hostName, port, DEFAULT_RECONNECT_NUMBER);
-        }
         if (reConnectNumber <= 0) {
             log.error("错误的重连次数:{}", reConnectNumber);
             throw new PrpcException(ErrorMsg.ILLEGAL_RECONNECT_NUMBER);
@@ -206,10 +210,8 @@ public final class NettyClient {
             } else {
                 log.error("{} {} 连接异常，正在重连...", hostName, port);
                 bootstrap.config().group().schedule(() -> {
-                            doConnect(hostName, port, reConnectNumber - 1);
-                        },
-                        0,
-                        TimeUnit.SECONDS);
+                    doConnect(hostName, port, reConnectNumber - 1);
+                }, 0, TimeUnit.SECONDS);
             }
         });
         channelFuture.channel().closeFuture().addListener((ChannelFutureListener) future -> close());
@@ -223,7 +225,7 @@ public final class NettyClient {
      * @return boolean 返回消息是否发送成功
      **/
     public boolean sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
-        List<Instance> instances = NacosRegistry.getInstance().getInstances(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
+        List<Instance> instances = nacosRegistry.getInstances(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
         if (CollectionUtils.isEmpty(instances)) {
             log.error("没有可用实例");
             return false;
