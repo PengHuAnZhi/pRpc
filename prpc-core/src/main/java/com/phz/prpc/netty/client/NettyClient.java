@@ -9,6 +9,7 @@ import com.phz.prpc.netty.message.PingMessage;
 import com.phz.prpc.netty.message.RpcRequestMessage;
 import com.phz.prpc.netty.protocol.MessageCodecSharable;
 import com.phz.prpc.netty.protocol.ProtocolFrameDecoder;
+import com.phz.prpc.proxy.PrpcJdkProxy;
 import com.phz.prpc.registry.NacosRegistry;
 import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.bootstrap.Bootstrap;
@@ -217,7 +218,7 @@ public final class NettyClient {
     }
 
     /**
-     * 代理类{@link com.phz.prpc.proxy.PrpcProxy#invoke}发送消息会调用这个方法
+     * 代理类{@link PrpcJdkProxy#invoke}发送消息会调用这个方法
      *
      * @param requestMessage 要发送的消息对象
      * @return boolean 返回消息是否发送成功

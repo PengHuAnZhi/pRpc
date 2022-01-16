@@ -4,7 +4,8 @@ import com.phz.prpc.annotation.PrpcClient;
 import com.phz.prpc.annotation.PrpcServer;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.netty.server.ServiceProvider;
-import com.phz.prpc.proxy.PrpcProxy;
+import com.phz.prpc.proxy.PrpcCglibProxy;
+import com.phz.prpc.proxy.PrpcJdkProxy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -45,6 +46,15 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
      * {@link ServiceProvider} 所有可以提供{@code Rpc}服务的实例都需要发布到注册中心
      **/
     private final ServiceProvider serviceProvider = ServiceProvider.getInstance();
+
+    /**
+     * JDK自带动态代理
+     **/
+    private static final String JDK = "jdk";
+    /**
+     * CGLIB实现动态代理
+     **/
+    private static final String CGLIB = "cglib";
 
     /**
      * 实例化{@code Bean}前，校验当前{@code Bean}是否被{@link PrpcServer}注解标注，来决定是否将当前{@code Bean}注册为一个{@code Bean}服务
@@ -97,11 +107,20 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
                 continue;
             }
             PrpcClient prpcClient = declaredField.getAnnotation(PrpcClient.class);
-            PrpcProxy prpcProxy = PrpcProxy.builder().
-                    serviceName(declaredField.getType().getCanonicalName()).
-                    groupName(prpcClient.groupName()).
-                    build();
-            Object clientProxy = prpcProxy.getProxy(declaredField.getType());
+            String proxy = prpcProperties.getProxy();
+            Object clientProxy = null;
+            log.info("代理实现：{}", proxy);
+            if (JDK.equalsIgnoreCase(proxy)) {
+                PrpcJdkProxy prpcJdkProxy = PrpcJdkProxy.builder()
+                        .groupName(prpcClient.groupName())
+                        .build();
+                clientProxy = prpcJdkProxy.getProxy(declaredField.getType());
+            } else if (CGLIB.equalsIgnoreCase(proxy)) {
+                PrpcCglibProxy prpcCglibProxy = PrpcCglibProxy.builder()
+                        .groupName(prpcClient.groupName())
+                        .build();
+                clientProxy = prpcCglibProxy.getProxy(declaredField.getType());
+            }
             declaredField.setAccessible(true);
             try {
                 declaredField.set(bean, clientProxy);

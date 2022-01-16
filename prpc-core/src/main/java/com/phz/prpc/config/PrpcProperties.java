@@ -55,4 +55,9 @@ public class PrpcProperties {
      * 压缩算法
      **/
     private String compressAlgorithm = "GZIP";
+
+    /**
+     * 动态代理实现方式
+     **/
+    private String proxy = "CGLIB";
 }

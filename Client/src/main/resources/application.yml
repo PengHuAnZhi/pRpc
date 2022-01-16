@@ -8,6 +8,7 @@ prpc:
   loadBalanceAlgorithm: "consistentHash"
   virtualNodeNum: 100
   compressAlgorithm: "GZIP"
+  proxy: "cglib"
 spring:
   cloud:
     nacos:

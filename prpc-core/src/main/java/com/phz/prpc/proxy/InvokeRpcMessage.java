@@ -8,41 +8,21 @@ import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
-import lombok.Builder;
-import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.UUID;
 
 /**
- * 调用远程服务的代理类
+ * <p>
+ * 所有动态代理类最终都是要执行同一个{@code prpc}远程方法请求，抽离出来作为公共代码
+ * </p>
  *
  * @author PengHuanZhi
- * @date 2022年01月10日 17:15
+ * @date 2022年01月16日 12:07
  */
-@Data
-@Builder
 @Slf4j
-public class PrpcProxy implements InvocationHandler {
-
-    /**
-     * 服务的名称
-     **/
-    private String serviceName;
-
-    /**
-     * 提供服务的组名
-     **/
-    private String groupName;
-
-    /**
-     * 客户端{@code Netty Rpc}请求实例{@link NettyClient}
-     **/
-    private static final NettyClient NETTY_CLIENT = NettyClient.getInstance();
+public class InvokeRpcMessage {
 
     /**
      * {@code Prpc配置类}
@@ -50,16 +30,19 @@ public class PrpcProxy implements InvocationHandler {
     private static final PrpcProperties PRPC_PROPERTIES = SpringBeanUtil.getBean(PrpcProperties.class);
 
     /**
-     * 真实的代理类所调用的方法
-     *
-     * @param proxy  要被代理的对象
-     * @param method 被代理的对象的方法
-     * @param args   方法中的参数值
-     * @return Object  返回代理方法的返回值
+     * 客户端{@code Netty Rpc}请求实例{@link NettyClient}
      **/
-    @Override
-    @SneakyThrows
-    public Object invoke(Object proxy, Method method, Object[] args) {
+    private static final NettyClient NETTY_CLIENT = NettyClient.getInstance();
+
+    /**
+     * 代理对象都需要执行这个方法，抽离出来作为公用
+     *
+     * @param groupName 服务组名
+     * @param method    方法对象
+     * @param args      方法参数
+     * @return Object 代理类
+     **/
+    public static Object invokeRpcMessageMethod(String groupName, Method method, Object[] args) throws InterruptedException {
         String sequenceId = UUID.randomUUID().toString();
         String methodName = method.getName();
         RpcRequestMessage rpcRequestMessage = RpcRequestMessage
@@ -89,16 +72,5 @@ public class PrpcProxy implements InvocationHandler {
             log.error("方法{}调用失败,原因:{}", methodName, promise.cause());
             return null;
         }
-    }
-
-    /**
-     * 根据被代理对象类型创建其代理类
-     *
-     * @param <T>   被代理对象泛型
-     * @param clazz 被代理对象的{@link Class}对象
-     * @return T 返回代理对象
-     **/
-    public <T> T getProxy(Class<T> clazz) {
-        return clazz.cast(Proxy.newProxyInstance(clazz.getClassLoader(), new Class<?>[]{clazz}, this));
     }
 }
