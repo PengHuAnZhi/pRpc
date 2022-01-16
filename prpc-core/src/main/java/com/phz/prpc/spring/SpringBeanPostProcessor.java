@@ -51,6 +51,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
      * JDK自带动态代理
      **/
     private static final String JDK = "jdk";
+
     /**
      * CGLIB实现动态代理
      **/

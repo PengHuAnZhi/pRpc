@@ -1,5 +1,7 @@
 package com.phz.prpc.netty.loadBalance;
 
+import com.phz.prpc.extension.Spi;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 
@@ -11,6 +13,7 @@ import java.util.List;
  * @author PengHuanZhi
  * @date 2022年01月15日 13:28
  */
+@Spi
 public interface LoadBalance {
     /**
      * 传入一个目标实例集合，通过实现的负载均衡算法，得到其中一个实例

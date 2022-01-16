@@ -1,9 +1,12 @@
 package com.phz.prpc.netty.compress;
 
+import com.phz.prpc.extension.Spi;
+
 /**
  * @author PengHuanZhi
  * @date 2022年01月16日 11:34
  */
+@Spi
 public interface Compress {
     /**
      * 将字节数组压缩返回

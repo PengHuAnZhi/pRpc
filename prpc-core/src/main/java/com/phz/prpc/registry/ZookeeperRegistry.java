@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2022年01月16日 12:40
  */
 @Slf4j
-public class ZookeeperRegistry implements ServiceRegistry {
+public final class ZookeeperRegistry implements ServiceRegistry {
 
     /**
      * {@code Zookeeper}客户端

@@ -3,6 +3,7 @@ package com.phz.prpc.netty.loadBalance;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
+import com.phz.prpc.extension.ExtensionLoader;
 import com.phz.prpc.spring.SpringBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,16 +57,17 @@ public final class PrpcLoadBalancer {
      **/
     public InetSocketAddress doChoice(List<InetSocketAddress> serviceInstances, String serviceName) {
         String loadBalanceAlgorithm = prpcProperties.getLoadBalanceAlgorithm();
-        LoadBalanceAlgorithm algorithm;
+        LoadBalance loadBalance;
         try {
-            algorithm = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm);
+//            algorithm = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm);
+            loadBalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension();
         } catch (IllegalArgumentException e) {
             log.error("未知的负载均衡算法:{},异常信息为:{}", loadBalanceAlgorithm, e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_LOAD_BALANCE_ALGORITHM);
         }
-        if (algorithm == LoadBalanceAlgorithm.consistentHash) {
-            return algorithm.doChoice(serviceInstances, serviceName);
+        if (loadBalance == LoadBalanceAlgorithm.consistentHash) {
+            return loadBalance.doChoice(serviceInstances, serviceName);
         }
-        return algorithm.doChoice(serviceInstances);
+        return loadBalance.doChoice(serviceInstances);
     }
 }

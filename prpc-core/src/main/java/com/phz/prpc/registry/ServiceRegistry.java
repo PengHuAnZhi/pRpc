@@ -1,5 +1,7 @@
 package com.phz.prpc.registry;
 
+import com.phz.prpc.extension.Spi;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 
@@ -7,6 +9,7 @@ import java.util.List;
  * @author PengHuanZhi
  * @date 2022年01月16日 13:52
  */
+@Spi
 public interface ServiceRegistry {
 
     /**
