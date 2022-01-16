@@ -12,7 +12,7 @@ import java.io.IOException;
 
 /**
  * <p>
- * {@code Hessian2}序列化算法辅助类
+ * {@code Hessian2}序列化实现类
  * </p>
  *
  * @author PengHuanZhi

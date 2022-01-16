@@ -10,11 +10,12 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
  * <p>
- * {@link com.esotericsoftware.kryo.Kryo}序列化算法辅助类
+ * {@link com.esotericsoftware.kryo.Kryo}序列化实现类
  * </p>
  *
  * @author PengHuanZhi
@@ -23,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class KryoSerializer {
     /**
-     * 每个线程的  {@link Kryo} 实例
+     * 因为Kryo不是线程安全的。所以使用线程本地存储每个线程的{@link Kryo}实例
      **/
     private static final ThreadLocal<Kryo> KRYO_LOCAL = ThreadLocal.withInitial(() -> {
         Kryo kryo = new Kryo();
@@ -61,14 +62,22 @@ public class KryoSerializer {
      * @param obj 任意对象
      * @return 序列化后的字节数组
      */
-    public static byte[] writeToByteArray(Object obj) {
+    public static byte[] serialize(Object obj) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Output output = new Output(byteArrayOutputStream);
         Kryo kryo = getInstance();
+        //Object->byte:将对象序列化为byte数组
         kryo.writeClassAndObject(output, obj);
         output.flush();
-
-        return byteArrayOutputStream.toByteArray();
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        try {
+            output.close();
+            byteArrayOutputStream.close();
+        } catch (IOException e) {
+            log.error("Kryo资源释放失败:{}", e.getMessage());
+            return bytes;
+        }
+        return bytes;
     }
 
     /**
@@ -79,7 +88,7 @@ public class KryoSerializer {
      * @return 序列化后的字符串
      */
     public static String writeToString(Object obj) {
-        return new String(Base64.encodeBase64(writeToByteArray(obj)), StandardCharsets.UTF_8);
+        return new String(Base64.encodeBase64(serialize(obj)), StandardCharsets.UTF_8);
     }
 
     /**
@@ -88,12 +97,20 @@ public class KryoSerializer {
      * @param byteArray writeToByteArray 方法序列化后的字节数组
      * @return 原对象
      */
-    public static Object readFromByteArray(byte[] byteArray) {
+    public static Object deserialize(byte[] byteArray) {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
         Input input = new Input(byteArrayInputStream);
-
         Kryo kryo = getInstance();
-        return kryo.readClassAndObject(input);
+        //byte->Object:从byte数组中反序列化出对对象
+        Object object = kryo.readClassAndObject(input);
+        try {
+            input.close();
+            byteArrayInputStream.close();
+        } catch (IOException e) {
+            log.error("Kryo资源释放失败:{}", e.getMessage());
+            return object;
+        }
+        return object;
     }
 
     /**
@@ -104,6 +121,6 @@ public class KryoSerializer {
      * @return 原对象
      */
     public static Object readFromString(String str) {
-        return readFromByteArray(Base64.decodeBase64(str.getBytes(StandardCharsets.UTF_8)));
+        return deserialize(Base64.decodeBase64(str.getBytes(StandardCharsets.UTF_8)));
     }
 }

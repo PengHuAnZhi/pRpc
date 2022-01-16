@@ -13,7 +13,7 @@ import javax.annotation.Resource;
 public class HelloServiceImpl implements HelloService {
 
     @Resource
-    Environment environment;
+    private Environment environment;
 
     @Override
     public String hello(String value) {

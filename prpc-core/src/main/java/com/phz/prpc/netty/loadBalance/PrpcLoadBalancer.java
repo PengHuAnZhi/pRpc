@@ -14,7 +14,7 @@ import java.util.List;
  * @date 2022年01月15日 13:13
  */
 @Slf4j
-public class PrpcLoadBalancer {
+public final class PrpcLoadBalancer {
     /**
      * {@code Prpc}配置类
      **/

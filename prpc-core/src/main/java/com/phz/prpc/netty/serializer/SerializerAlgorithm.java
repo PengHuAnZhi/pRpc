@@ -76,17 +76,17 @@ public enum SerializerAlgorithm implements Serializer {
         }
     },
     /**
-     * {@code KYRO}序列化实现
+     * {@code KRYO}序列化实现
      **/
-    KYRO {
+    KRYO {
         @Override
         public <T> Object deserialize(Class<T> clazz, byte[] bytes) {
-            return KryoSerializer.readFromByteArray(bytes);
+            return KryoSerializer.deserialize(bytes);
         }
 
         @Override
         public <T> byte[] serialize(T object) {
-            return KryoSerializer.writeToByteArray(object);
+            return KryoSerializer.serialize(object);
         }
     },
     /**
@@ -101,6 +101,20 @@ public enum SerializerAlgorithm implements Serializer {
         @Override
         public <T> byte[] serialize(T object) {
             return Hessian2Serializer.serialize(object);
+        }
+    },
+    /**
+     * {@code protostuff}序列化实现
+     **/
+    PROTOSTUFF {
+        @Override
+        public <T> Object deserialize(Class<T> clazz, byte[] bytes) {
+            return ProtostuffSerializer.deserialize(bytes, clazz);
+        }
+
+        @Override
+        public <T> byte[] serialize(T object) {
+            return ProtostuffSerializer.serialize(object);
         }
     }
 }

@@ -14,7 +14,7 @@ import java.lang.reflect.Type;
  * @date 2022年01月15日 21:55
  */
 @Slf4j
-public class GsonSerializer implements JsonSerializer<Class<?>>, JsonDeserializer<Class<?>> {
+public final class GsonSerializer implements JsonSerializer<Class<?>>, JsonDeserializer<Class<?>> {
 
     /**
      * 私有构造方法，禁用手动实例化
