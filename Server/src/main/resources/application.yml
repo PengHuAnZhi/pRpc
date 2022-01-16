@@ -1,12 +1,20 @@
 server:
   port: 8081
 prpc:
-  nacosAddress: "localhost:8848"
+  #  nacosAddress: "localhost:8848"
   serverPort: 8888
   serializerAlgorithm: "JDK"
+  registry: "zookeeper"
+  zookeeperAddress: "localhost:2181"
+  zookeeperRootPath: "prpc"
+  zookeeperRetryBaseTime: 1000
+  zookeeperRetryTimes: 3
 
 spring:
+  application:
+    name: prpc
   cloud:
     nacos:
       discovery:
-        service: "aaa"
+        enabled: false
+        server-addr: 127.0.0.1:8848

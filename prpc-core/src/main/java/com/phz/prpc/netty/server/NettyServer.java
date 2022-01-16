@@ -5,6 +5,8 @@ import com.phz.prpc.netty.handler.RpcRequestMessageHandler;
 import com.phz.prpc.netty.protocol.MessageCodecSharable;
 import com.phz.prpc.netty.protocol.ProtocolFrameDecoder;
 import com.phz.prpc.registry.NacosRegistry;
+import com.phz.prpc.registry.ServiceRegistry;
+import com.phz.prpc.registry.ZookeeperRegistry;
 import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -40,9 +42,19 @@ public final class NettyServer {
     private static EventLoopGroup worker;
 
     /**
-     * Nacos服务工具类
+     * 服务注册工具类
      **/
-    private static NacosRegistry nacosRegistry;
+    private static ServiceRegistry serviceRegistry;
+
+    /**
+     * {@link NacosRegistry}表示Nacos作为注册中心
+     **/
+    private static final String NACOS = "nacos";
+
+    /**
+     * {@link org.apache.zookeeper.ZooKeeper}表示使用Zookeeper作为注册中心
+     **/
+    private static final String ZOOKEEPER = "zookeeper";
 
     /**
      * 私有构造方法，禁用手动实例化
@@ -50,7 +62,12 @@ public final class NettyServer {
     private NettyServer() {
         boss = new NioEventLoopGroup(1);
         worker = new NioEventLoopGroup();
-        nacosRegistry = NacosRegistry.getInstance();
+        PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
+        if (NACOS.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = NacosRegistry.getInstance();
+        } else if (ZOOKEEPER.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = ZookeeperRegistry.getInstance();
+        }
     }
 
     /**
@@ -138,7 +155,7 @@ public final class NettyServer {
         closeFuture.addListener((ChannelFutureListener) future -> {
             boss.shutdownGracefully();
             worker.shutdownGracefully();
-            nacosRegistry.deRegisterAllService();
+            serviceRegistry.deRegisterAllService();
         });
     }
 }

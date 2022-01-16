@@ -11,6 +11,8 @@ import com.phz.prpc.netty.protocol.MessageCodecSharable;
 import com.phz.prpc.netty.protocol.ProtocolFrameDecoder;
 import com.phz.prpc.proxy.PrpcJdkProxy;
 import com.phz.prpc.registry.NacosRegistry;
+import com.phz.prpc.registry.ServiceRegistry;
+import com.phz.prpc.registry.ZookeeperRegistry;
 import com.phz.prpc.spring.SpringBeanUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -54,9 +56,9 @@ public final class NettyClient {
      **/
     private final NioEventLoopGroup group;
     /**
-     * {@code Nacos}服务注册工具类
+     * 服务注册工具类
      **/
-    private final NacosRegistry nacosRegistry;
+    private ServiceRegistry serviceRegistry;
 
     /**
      * {@code Prpc}配置类
@@ -64,12 +66,34 @@ public final class NettyClient {
     private final PrpcProperties prpcProperties;
 
     /**
+     * {@link NacosRegistry}表示Nacos作为注册中心
+     **/
+    private static final String NACOS = "nacos";
+
+    /**
+     * {@link org.apache.zookeeper.ZooKeeper}表示使用Zookeeper作为注册中心
+     **/
+    private static final String ZOOKEEPER = "zookeeper";
+    /**
+     * {@link eureka}表示使用Eureka作为注册中心
+     **/
+    private static final String EUREKA = "eureka";
+    /**
+     * {@link consul}表示使用Consul作为注册中心
+     **/
+    private static final String CONSUL = "consul";
+
+    /**
      * 私有构造方法，禁用手动实例化<br>
      * 第一次加载会将{@link ServerChannelPool }单例取出赋值到当前类属性，然后创建一个{@link NioEventLoopGroup}，最后使用这个请求事件循环组创建好一个{@code Netty}网络请求对象
      **/
     private NettyClient() {
-        nacosRegistry = NacosRegistry.getInstance();
         prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
+        if (NACOS.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = NacosRegistry.getInstance();
+        } else if (ZOOKEEPER.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = ZookeeperRegistry.getInstance();
+        }
         serverChannelPool = ServerChannelPool.getInstance();
         group = new NioEventLoopGroup();
         LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
@@ -224,7 +248,7 @@ public final class NettyClient {
      * @return boolean 返回消息是否发送成功
      **/
     public boolean sendPrpcRequestMessage(RpcRequestMessage requestMessage) {
-        InetSocketAddress address = nacosRegistry.getServiceInstance(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
+        InetSocketAddress address = serviceRegistry.getOneServiceInstance(requestMessage.getInterfaceName() + ":" + requestMessage.getGroupName());
         if (address == null) {
             log.error("没有可用实例");
             return false;

@@ -1,7 +1,8 @@
 server:
   port: 8000
+
 prpc:
-  nacosAddress: "localhost:8848"
+  #  nacosAddress: "localhost:8848"
   reConnectNumber: 5
   serializerAlgorithm: "kryo"
   timeOut: 3000
@@ -9,8 +10,17 @@ prpc:
   virtualNodeNum: 100
   compressAlgorithm: "GZIP"
   proxy: "cglib"
+  registry: "zookeeper"
+  zookeeperAddress: "localhost:2181"
+  zookeeperRootPath: "prpc"
+  zookeeperRetryBaseTime: 1000
+  zookeeperRetryTimes: 3
+
 spring:
+  application:
+    name: prpc
   cloud:
     nacos:
       discovery:
-        service: "aaa"
+        enabled: false
+        server-addr: 127.0.0.1:8848

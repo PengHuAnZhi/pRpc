@@ -1,6 +1,6 @@
 package com.phz.prpc.netty.loadBalance;
 
-import com.phz.prpc.CollectionUtil;
+import com.phz.prpc.util.CollectionUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.util.CollectionUtils;

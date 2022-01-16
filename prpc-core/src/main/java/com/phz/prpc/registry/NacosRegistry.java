@@ -3,7 +3,6 @@ package com.phz.prpc.registry;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
-import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
@@ -29,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022年01月09日 13:28
  */
 @Slf4j
-public final class NacosRegistry {
+public final class NacosRegistry implements ServiceRegistry {
     /**
      * {@code Nacos}服务注册中心地址
      **/
@@ -51,11 +50,16 @@ public final class NacosRegistry {
     private static final Map<String, List<InetSocketAddress>> SERVER_ADDRESS_MAP = new ConcurrentHashMap<>();
 
     /**
+     * {@code Prpc配置类}
+     **/
+    private static final PrpcProperties PRPC_PROPERTIES = SpringBeanUtil.getBean(PrpcProperties.class);
+
+    /**
      * 私有构造方法，禁用手动实例化
      **/
     private NacosRegistry() {
         try {
-            nacosServerAddress = SpringBeanUtil.getBean(PrpcProperties.class).getNacosAddress();
+            nacosServerAddress = PRPC_PROPERTIES.getNacosAddress();
             namingService = NamingFactory.createNamingService(nacosServerAddress);
             prpcLoadBalancer = PrpcLoadBalancer.getInstance();
             log.info("nacos服务连接成功:{}", nacosServerAddress);
@@ -91,6 +95,7 @@ public final class NacosRegistry {
      * @param serviceName 服务名称，需要唯一
      * @param address     注册服务的远程地址
      **/
+    @Override
     public void registerService(String serviceName, InetSocketAddress address) {
         String hostName = address.getHostString();
         int port = address.getPort();
@@ -108,6 +113,7 @@ public final class NacosRegistry {
     /**
      * 移除所有的服务实例
      **/
+    @Override
     public void deRegisterAllService() {
         Iterator<Map.Entry<String, List<InetSocketAddress>>> iterator = SERVER_ADDRESS_MAP.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -126,6 +132,7 @@ public final class NacosRegistry {
      * @param hostName    服务地址
      * @param port        服务端口
      **/
+    @Override
     public void deRegisterService(String serviceName, String hostName, int port) {
         try {
             namingService.deregisterInstance(serviceName, hostName, port);
@@ -139,12 +146,13 @@ public final class NacosRegistry {
 
 
     /**
-     * 使用负载均衡算法获取可提供的服务实例{@link Instance}
+     * 使用负载均衡算法获取可提供的服务实例{@link InetSocketAddress}
      *
      * @param serviceName 需要获取的服务名称
      * @return InetSocketAddress 可提供服务的实例
      **/
-    public InetSocketAddress getServiceInstance(String serviceName) {
+    @Override
+    public InetSocketAddress getOneServiceInstance(String serviceName) {
         List<InetSocketAddress> serviceInstances = getServiceInstances(serviceName);
         if (CollectionUtils.isEmpty(serviceInstances)) {
             return null;
@@ -156,9 +164,10 @@ public final class NacosRegistry {
      * 根据服务名称查询下方所有的实例
      *
      * @param serviceName 服务名称
-     * @return List<Instance>  实例集合
+     * @return List<InetSocketAddress>  实例集合
      **/
-    private List<InetSocketAddress> getServiceInstances(String serviceName) {
+    @Override
+    public List<InetSocketAddress> getServiceInstances(String serviceName) {
         try {
             List<InetSocketAddress> instances = new ArrayList<>();
             namingService.getAllInstances(serviceName).forEach(instance -> instances.add(new InetSocketAddress(instance.getIp(), instance.getPort())));

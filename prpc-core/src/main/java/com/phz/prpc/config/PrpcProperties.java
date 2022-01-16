@@ -60,4 +60,29 @@ public class PrpcProperties {
      * 动态代理实现方式
      **/
     private String proxy = "CGLIB";
+
+    /**
+     * 注册中心
+     **/
+    private String registry;
+
+    /**
+     * {@code Zookeeper}注册中心地址
+     **/
+    private String zookeeperAddress = "localhost:2181";
+
+    /**
+     * {@code Zookeeper} {@code prpc} 服务根目录
+     **/
+    private String zookeeperRootPath = "prpc";
+
+    /**
+     * {@code Zookeeper}重连间隔时间单位{@code ms}
+     **/
+    private Integer zookeeperRetryBaseTime = 1000;
+
+    /**
+     * {@code Zookeeper}重连次数
+     **/
+    private Integer zookeeperRetryTimes = 3;
 }

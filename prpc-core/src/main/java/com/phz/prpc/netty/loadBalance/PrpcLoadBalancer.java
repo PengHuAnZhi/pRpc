@@ -32,6 +32,9 @@ public final class PrpcLoadBalancer {
      * {@code PrpcLoadBalance}单例维护静态内部类：类的加载都是懒惰的，第一次调用{@link PrpcLoadBalancer#getInstance()}方法，才会加载此内部类，然后创建唯一负载均衡器
      **/
     private static class PrpcLoadBalanceHolder {
+        /**
+         * 单例
+         **/
         private static final PrpcLoadBalancer INSTANCE = new PrpcLoadBalancer();
     }
 

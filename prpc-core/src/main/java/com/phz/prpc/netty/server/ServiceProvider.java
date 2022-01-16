@@ -1,8 +1,12 @@
 package com.phz.prpc.netty.server;
 
+import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
 import com.phz.prpc.registry.NacosRegistry;
+import com.phz.prpc.registry.ServiceRegistry;
+import com.phz.prpc.registry.ZookeeperRegistry;
+import com.phz.prpc.spring.SpringBeanUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -26,14 +30,30 @@ public final class ServiceProvider {
     private final Map<String, Object> serviceMap = new ConcurrentHashMap<>();
 
     /**
-     * {@link NacosRegistry} {@code Nacos}服务注册中心
+     * 服务注册中心
      **/
-    private final NacosRegistry nacosRegistry = NacosRegistry.getInstance();
+    private ServiceRegistry serviceRegistry;
+
+    /**
+     * {@link NacosRegistry}表示Nacos作为注册中心
+     **/
+    private static final String NACOS = "nacos";
+
+    /**
+     * {@link org.apache.zookeeper.ZooKeeper}表示使用Zookeeper作为注册中心
+     **/
+    private static final String ZOOKEEPER = "zookeeper";
 
     /**
      * 私有构造方法，禁用手动实例化
      **/
     private ServiceProvider() {
+        PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
+        if (NACOS.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = NacosRegistry.getInstance();
+        } else if (ZOOKEEPER.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            serviceRegistry = ZookeeperRegistry.getInstance();
+        }
     }
 
     /**
@@ -65,7 +85,7 @@ public final class ServiceProvider {
      **/
     public void publishService(String serviceName, String hostName, int port, Object service) {
         serviceMap.put(serviceName, service);
-        nacosRegistry.registerService(serviceName, new InetSocketAddress(hostName, port));
+        serviceRegistry.registerService(serviceName, new InetSocketAddress(hostName, port));
     }
 
     /**
