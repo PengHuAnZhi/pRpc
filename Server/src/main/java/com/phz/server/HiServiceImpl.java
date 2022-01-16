@@ -7,16 +7,16 @@ import javax.annotation.Resource;
 
 /**
  * @author PengHuanZhi
- * @date 2022年01月11日 21:25
+ * @date 2022年01月16日 17:14
  */
-@PrpcServer(groupName = "hello2")
-public class HelloServiceImpl implements HelloService {
+@PrpcServer(groupName = "hello1")
+public class HiServiceImpl implements HelloService {
 
     @Resource
     private Environment environment;
 
     @Override
     public String hello(String value) {
-        return "你好:" + value + "(来自" + environment.getProperty("local.server.port") + ")";
+        return "Hi:" + value + "(来自" + environment.getProperty("local.server.port") + ")";
     }
 }

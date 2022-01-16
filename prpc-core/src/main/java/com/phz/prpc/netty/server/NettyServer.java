@@ -56,6 +56,8 @@ public final class NettyServer {
      **/
     private static final String ZOOKEEPER = "zookeeper";
 
+    private static ServerBootstrap bootstrap;
+
     /**
      * 私有构造方法，禁用手动实例化
      **/
@@ -94,12 +96,16 @@ public final class NettyServer {
      **/
     @SneakyThrows
     public void start() {
+        if (bootstrap != null) {
+            return;
+        }
         PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
         LoggingHandler loggingHandler = new LoggingHandler(LogLevel.INFO);
         MessageCodecSharable messageCodecSharable = new MessageCodecSharable();
         // rpc 请求消息处理器
         RpcRequestMessageHandler rpcRequestMessageHandler = new RpcRequestMessageHandler();
-        ChannelFuture channelFuture = new ServerBootstrap()
+        bootstrap = new ServerBootstrap();
+        ChannelFuture channelFuture = bootstrap
                 .group(boss, worker)
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)

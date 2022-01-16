@@ -109,7 +109,7 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
             PrpcClient prpcClient = declaredField.getAnnotation(PrpcClient.class);
             String proxy = prpcProperties.getProxy();
             Object clientProxy = null;
-            log.info("代理实现：{}", proxy);
+            log.info("{} 代理实现：{}", bean, proxy);
             if (JDK.equalsIgnoreCase(proxy)) {
                 PrpcJdkProxy prpcJdkProxy = PrpcJdkProxy.builder()
                         .groupName(prpcClient.groupName())

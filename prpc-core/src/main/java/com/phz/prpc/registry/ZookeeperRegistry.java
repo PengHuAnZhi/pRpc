@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
- * Zookeeper做服务注册中心的实现
+ * {@code Zookeeper}做服务注册中心的实现
  * </p>
  *
  * @author PengHuanZhi
