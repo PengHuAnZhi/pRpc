@@ -74,14 +74,6 @@ public final class NettyClient {
      * {@link org.apache.zookeeper.ZooKeeper}表示使用Zookeeper作为注册中心
      **/
     private static final String ZOOKEEPER = "zookeeper";
-    /**
-     * {@link eureka}表示使用Eureka作为注册中心
-     **/
-    private static final String EUREKA = "eureka";
-    /**
-     * {@link consul}表示使用Consul作为注册中心
-     **/
-    private static final String CONSUL = "consul";
 
     /**
      * 私有构造方法，禁用手动实例化<br>
