@@ -30,6 +30,7 @@
         <kryo-serializers>0.45</kryo-serializers>
         <hessian.version>4.0.65</hessian.version>
         <protostuff.version>1.7.4</protostuff.version>
+        <cglib.version>3.3.0</cglib.version>
     </properties>
 
     <dependencies>
@@ -174,6 +175,11 @@
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-runtime</artifactId>
             <version>${protostuff.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <version>${cglib.version}</version>
         </dependency>
     </dependencies>
 </project>

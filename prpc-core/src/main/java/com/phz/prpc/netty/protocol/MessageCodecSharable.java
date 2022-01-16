@@ -52,6 +52,11 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     private static final byte VERSION = 1;
 
     /**
+     * 填充字节长度，满足固定字节长度为2^n
+     **/
+    private static final int FILL_BYTE_LENGTH = 17;
+
+    /**
      * 将明文按照自己的协议编码
      *
      * @param ctx     {@link ChannelHandlerContext}处理器上下文
@@ -84,7 +89,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         byte[] sequenceId = msg.getSequenceId().getBytes(StandardCharsets.UTF_8);
         out.writeBytes(sequenceId);
         // 6、无意义，对齐填充
-        out.writeByte(0);
+        out.writeBytes(new byte[FILL_BYTE_LENGTH]);
         // 7. 根据指定的序列化方式去序列化
         byte[] message = algorithm.serialize(msg);
         // 8. 长度
@@ -105,30 +110,32 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
      **/
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> outList) {
+        ByteBuf unwrap = in.unwrap();
+        unwrap.resetReaderIndex();
         byte[] magicNum = new byte[MAGIC_NUMBER.length];
         // 1. 4 字节的魔数
-        in.readBytes(magicNum);
+        unwrap.readBytes(magicNum);
         if (!Arrays.equals(magicNum, MAGIC_NUMBER)) {
             log.error("未知的魔数:{}", Arrays.toString(magicNum));
             throw new PrpcException(ErrorMsg.UNKNOWN_MAGIC_CODE);
         }
         // 2. 1 字节的版本号
-        byte version = in.readByte();
+        byte version = unwrap.readByte();
         // 3. 1 字节的序列化算法
-        byte serializerAlgorithm = in.readByte();
+        byte serializerAlgorithm = unwrap.readByte();
         // 4. 1 字节的指令类型
-        byte messageType = in.readByte();
+        byte messageType = unwrap.readByte();
         // 5. 36个字节的请求序列号
         byte[] sequenceIdBytes = new byte[SEQUENCE_ID_LENGTH];
-        in.readBytes(sequenceIdBytes);
+        unwrap.readBytes(sequenceIdBytes);
         String sequenceId = new String(sequenceIdBytes, (StandardCharsets.UTF_8));
         // 6、无意义，对齐填充
-        in.readByte();
+        unwrap.readBytes(new byte[FILL_BYTE_LENGTH]);
         // 7. 长度
-        int length = in.readInt();
+        int length = unwrap.readInt();
         // 8. 读取内容
         byte[] bytes = new byte[length];
-        in.readBytes(bytes, 0, length);
+        unwrap.readBytes(bytes, 0, length);
         // 找到反序列化算法
         SerializerAlgorithm algorithm;
         try {
