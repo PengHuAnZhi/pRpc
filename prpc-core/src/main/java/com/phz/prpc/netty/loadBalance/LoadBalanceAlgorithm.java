@@ -55,7 +55,9 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
          * 一致性哈希算法选择器
          **/
         private final ConcurrentHashMap<String, ConsistenceHashChooser> consistenceHashMap = new ConcurrentHashMap<>();
-
+        /**
+         * {@code Prpc}配置类
+         **/
         private final PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
 
         @Override

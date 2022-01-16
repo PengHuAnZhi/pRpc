@@ -3,6 +3,7 @@ package com.phz.prpc.netty.protocol;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
+import com.phz.prpc.netty.compress.CompressAlgorithm;
 import com.phz.prpc.netty.message.Message;
 import com.phz.prpc.netty.serializer.SerializerAlgorithm;
 import com.phz.prpc.spring.SpringBeanUtil;
@@ -54,7 +55,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     /**
      * 填充字节长度，满足固定字节长度为2^n
      **/
-    private static final int FILL_BYTE_LENGTH = 17;
+    private static final int FILL_BYTE_LENGTH = 16;
 
     /**
      * 将明文按照自己的协议编码
@@ -65,23 +66,23 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
      **/
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> outList) {
-        String serializerAlgorithm = PRPC_PROPERTIES.getSerializerAlgorithm();
-        SerializerAlgorithm algorithm;
+        String serializer = PRPC_PROPERTIES.getSerializerAlgorithm();
+        SerializerAlgorithm serializerAlgorithm;
         try {
-            algorithm = SerializerAlgorithm.valueOf(serializerAlgorithm.toUpperCase());
-            log.info("{} 发送消息的序列化算法为:{}", ctx.channel().localAddress(), serializerAlgorithm);
+            serializerAlgorithm = SerializerAlgorithm.valueOf(serializer.toUpperCase());
+            log.info("{} 发送消息的序列化算法为:{}", ctx.channel().localAddress(), serializer);
         } catch (IllegalArgumentException e) {
-            log.error("未知的序列化算法:{},异常信息为:{}", serializerAlgorithm, e.getMessage());
+            log.error("未知的序列化算法:{},异常信息为:{}", serializer, e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_SERIALIZER_ALGORITHM);
         }
-        int ordinal = algorithm.ordinal();
+        int serializerOrdinal = serializerAlgorithm.ordinal();
         ByteBuf out = ctx.alloc().buffer();
         // 1. 4 字节的魔数
         out.writeBytes(MAGIC_NUMBER);
         // 2. 1 字节的版本
         out.writeByte(VERSION);
         // 3. 1 字节的序列化方式 枚举类ordinal()方法可以获取下标，也是从0开始的
-        out.writeByte(ordinal);
+        out.writeByte(serializerOrdinal);
         // 4. 1 字节的指令类型
         int messageType = msg.getMessageType();
         out.writeByte(messageType);
@@ -91,13 +92,26 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 6、无意义，对齐填充
         out.writeBytes(new byte[FILL_BYTE_LENGTH]);
         // 7. 根据指定的序列化方式去序列化
-        byte[] message = algorithm.serialize(msg);
-        // 8. 长度
-        int length = message.length;
+        byte[] message = serializerAlgorithm.serialize(msg);
+        // 8.内容压缩算法
+        String compress = PRPC_PROPERTIES.getCompressAlgorithm();
+        CompressAlgorithm compressAlgorithm;
+        try {
+            compressAlgorithm = CompressAlgorithm.valueOf(compress.toUpperCase());
+            log.info("{} 发送消息的压缩算法为:{}", ctx.channel().localAddress(), compress);
+        } catch (IllegalArgumentException e) {
+            log.error("未知的消息压缩算法:{},异常信息为:{}", compress, e.getMessage());
+            throw new PrpcException(ErrorMsg.UNKNOWN_COMPRESS_ALGORITHM);
+        }
+        int compressOrdinal = compressAlgorithm.ordinal();
+        out.writeByte(compressOrdinal);
+        byte[] compressMessage = compressAlgorithm.compress(message);
+        // 9. 长度
+        int length = compressMessage.length;
         out.writeInt(length);
-        // 9. 写入内容
-        out.writeBytes(message);
-        log.info("编码：magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}", MAGIC_NUMBER, VERSION, algorithm, messageType, sequenceId, length);
+        // 10. 写入内容
+        out.writeBytes(compressMessage);
+        log.info("编码：magicNum:{}, version:{}, serializer:{}, messageType:{}, sequenceId:{}, length:{}, compressAlgorithm:{}", MAGIC_NUMBER, VERSION, serializerAlgorithm, messageType, sequenceId, length, compressAlgorithm);
         outList.add(out);
     }
 
@@ -122,7 +136,7 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 2. 1 字节的版本号
         byte version = unwrap.readByte();
         // 3. 1 字节的序列化算法
-        byte serializerAlgorithm = unwrap.readByte();
+        byte serializer = unwrap.readByte();
         // 4. 1 字节的指令类型
         byte messageType = unwrap.readByte();
         // 5. 36个字节的请求序列号
@@ -131,23 +145,33 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         String sequenceId = new String(sequenceIdBytes, (StandardCharsets.UTF_8));
         // 6、无意义，对齐填充
         unwrap.readBytes(new byte[FILL_BYTE_LENGTH]);
+        byte compress = unwrap.readByte();
         // 7. 长度
         int length = unwrap.readInt();
         // 8. 读取内容
-        byte[] bytes = new byte[length];
-        unwrap.readBytes(bytes, 0, length);
-        // 找到反序列化算法
-        SerializerAlgorithm algorithm;
+        byte[] compressMessage = new byte[length];
+        unwrap.readBytes(compressMessage, 0, length);
+        // 找到压缩算法
+        CompressAlgorithm compressAlgorithm;
         try {
-            algorithm = SerializerAlgorithm.values()[serializerAlgorithm];
+            compressAlgorithm = CompressAlgorithm.values()[compress];
+        } catch (IllegalArgumentException e) {
+            log.error("{}收到的消息所指定压缩算法未知,异常信息为:{}", ctx.channel().localAddress(), e.getMessage());
+            throw new PrpcException(ErrorMsg.UNKNOWN_COMPRESS_ALGORITHM);
+        }
+        byte[] decompressMessage = compressAlgorithm.decompress(compressMessage);
+        // 找到反序列化算法
+        SerializerAlgorithm serializerAlgorithm;
+        try {
+            serializerAlgorithm = SerializerAlgorithm.values()[serializer];
         } catch (IllegalArgumentException e) {
             log.error("{}收到的消息所指定反序列化算法未知,异常信息为:{}", ctx.channel().localAddress(), e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_SERIALIZER_ALGORITHM);
         }
         // 确定具体消息类型
         Class<? extends Message> messageClass = Message.getMessageClass(messageType);
-        Message message = (Message) algorithm.deserialize(messageClass, bytes);
-        log.info("解码：magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}", magicNum, version, algorithm, messageType, sequenceId, length);
+        Message message = (Message) serializerAlgorithm.deserialize(messageClass, decompressMessage);
+        log.info("解码：magicNum:{}, version:{}, serializerAlgorithm:{}, messageType:{}, sequenceId:{}, length:{}, compressAlgorithm:{}", magicNum, version, serializerAlgorithm, messageType, sequenceId, length, compressAlgorithm);
         outList.add(message);
     }
 }

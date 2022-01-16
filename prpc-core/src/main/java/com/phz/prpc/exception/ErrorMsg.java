@@ -43,6 +43,10 @@ public enum ErrorMsg {
      **/
     UNKNOWN_SERIALIZER_ALGORITHM("未知的序列化算法"),
     /**
+     * 未知的压缩算法
+     **/
+    UNKNOWN_COMPRESS_ALGORITHM("未知的压缩算法"),
+    /**
      * 错误的重连次数
      **/
     ILLEGAL_RECONNECT_NUMBER("错误的重连次数"),

@@ -50,4 +50,9 @@ public class PrpcProperties {
      * 一致性{@code Hash} {@link com.phz.prpc.netty.loadBalance.LoadBalanceAlgorithm#consistentHash}需要配置此参数，表示虚拟节点数
      **/
     private Integer virtualNodeNum = 100;
+
+    /**
+     * 压缩算法
+     **/
+    private String compressAlgorithm = "GZIP";
 }
