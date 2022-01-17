@@ -167,7 +167,7 @@ public final class ZookeeperRegistry implements ServiceRegistry {
         if (CollectionUtils.isEmpty(serviceInstances)) {
             return null;
         }
-        return prpcLoadBalancer.doChoice(serviceInstances, serviceName);
+        return prpcLoadBalancer.doChoice(serviceInstances);
     }
 
 

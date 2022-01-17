@@ -54,19 +54,14 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
         /**
          * 一致性哈希算法选择器
          **/
-        private final ConcurrentHashMap<String, ConsistenceHashChooser> consistenceHashMap = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<InetAddress, ConsistenceHashChooser> consistenceHashMap = new ConcurrentHashMap<>();
         /**
          * {@code Prpc}配置类
          **/
         private final PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
 
         @Override
-        public InetSocketAddress doChoice(List<InetSocketAddress> instances, String rpcServiceName) {
-            ConsistenceHashChooser consistenceHashChooser = consistenceHashMap.get(rpcServiceName);
-            if (consistenceHashChooser == null) {
-                consistenceHashChooser = new ConsistenceHashChooser(prpcProperties.getVirtualNodeNum(), instances);
-                consistenceHashMap.put(rpcServiceName, consistenceHashChooser);
-            }
+        public InetSocketAddress doChoice(List<InetSocketAddress> instances) {
             InetAddress localHost;
             try {
                 localHost = InetAddress.getLocalHost();
@@ -74,6 +69,12 @@ public enum LoadBalanceAlgorithm implements LoadBalance {
                 log.error("获取本机Ip失败，原因:{}", e.getMessage());
                 return null;
             }
+            ConsistenceHashChooser consistenceHashChooser = consistenceHashMap.get(localHost);
+            if (consistenceHashChooser == null) {
+                consistenceHashChooser = new ConsistenceHashChooser(prpcProperties.getVirtualNodeNum(), instances);
+                consistenceHashMap.put(localHost, consistenceHashChooser);
+            }
+
             return consistenceHashChooser.getServer(localHost.getHostAddress());
         }
     }

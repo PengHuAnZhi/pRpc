@@ -1,7 +1,5 @@
 package com.phz.prpc.netty.serializer;
 
-import com.phz.prpc.extension.Spi;
-
 /**
  * <p>
  * 序列化的接口，所有{@code prpc}的序列化方法都需要实现这个接口
@@ -10,7 +8,6 @@ import com.phz.prpc.extension.Spi;
  * @author PengHuanZhi
  * @date 2022年01月10日 21:40
  */
-@Spi
 public interface Serializer {
     /**
      * 反序列化方法

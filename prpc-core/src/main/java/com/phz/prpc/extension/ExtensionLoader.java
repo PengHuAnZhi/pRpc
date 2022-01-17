@@ -61,7 +61,7 @@ public final class ExtensionLoader<T> {
         // 加载到一个第三方实现
         Class<T> clazz = loadExtensionFile();
         if (clazz == null) {
-            throw new RuntimeException("没有找到该实现 : " + type.getName());
+            return null;
         }
         try {
             return clazz.newInstance();

@@ -52,21 +52,19 @@ public final class PrpcLoadBalancer {
      * 使用负载均衡算法从服务集合中选取一个服务
      *
      * @param serviceInstances 服务集合
-     * @param serviceName      服务名称
      * @return InetSocketAddress 选取的服务
      **/
-    public InetSocketAddress doChoice(List<InetSocketAddress> serviceInstances, String serviceName) {
+    public InetSocketAddress doChoice(List<InetSocketAddress> serviceInstances) {
         String loadBalanceAlgorithm = prpcProperties.getLoadBalanceAlgorithm();
         LoadBalance loadBalance;
         try {
-//            algorithm = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm);
             loadBalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension();
+            if (loadBalance == null) {
+                loadBalance = LoadBalanceAlgorithm.valueOf(loadBalanceAlgorithm);
+            }
         } catch (IllegalArgumentException e) {
             log.error("未知的负载均衡算法:{},异常信息为:{}", loadBalanceAlgorithm, e.getMessage());
             throw new PrpcException(ErrorMsg.UNKNOWN_LOAD_BALANCE_ALGORITHM);
-        }
-        if (loadBalance == LoadBalanceAlgorithm.consistentHash) {
-            return loadBalance.doChoice(serviceInstances, serviceName);
         }
         return loadBalance.doChoice(serviceInstances);
     }
