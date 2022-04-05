@@ -29,15 +29,15 @@ public class PrpcProperties {
     /**
      * 序列化算法
      **/
-    private String serializerAlgorithm = "JSON";
+    private String serializerAlgorithm = "JDK";
 
     /**
-     * 超时重连的情况
+     * 超时重连的次数
      **/
     private Integer reConnectNumber = 100;
 
     /**
-     * {@code Rpc}请求超时事件
+     * {@code Rpc}请求超时时间
      **/
     private Integer timeOut = 2000;
 
