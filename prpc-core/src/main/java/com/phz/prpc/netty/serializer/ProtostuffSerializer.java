@@ -71,7 +71,7 @@ public class ProtostuffSerializer {
         if (schema == null) {
             schema = RuntimeSchema.getSchema(clazz);
             if (schema == null) {
-                SCHEMA_CACHE.put(clazz, schema);
+                SCHEMA_CACHE.put(clazz, null);
             }
         }
         return schema;

@@ -1,5 +1,6 @@
 package com.phz.prpc.netty.server;
 
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
 import com.phz.prpc.config.PrpcProperties;
 import com.phz.prpc.exception.ErrorMsg;
 import com.phz.prpc.exception.PrpcException;
@@ -49,9 +50,15 @@ public final class ServiceProvider {
      **/
     private ServiceProvider() {
         PrpcProperties prpcProperties = SpringBeanUtil.getBean(PrpcProperties.class);
+        NacosDiscoveryProperties nacosProperties = SpringBeanUtil.getBean(NacosDiscoveryProperties.class);
+        nacosProperties.setService("prpc");
         if (NACOS.equalsIgnoreCase(prpcProperties.getRegistry())) {
             serviceRegistry = NacosRegistry.getInstance();
+            nacosProperties.setServerAddr(prpcProperties.getNacosAddress());
         } else if (ZOOKEEPER.equalsIgnoreCase(prpcProperties.getRegistry())) {
+            nacosProperties.setRegisterEnabled(false);
+            nacosProperties.setInstanceEnabled(false);
+            nacosProperties.setEphemeral(false);
             serviceRegistry = ZookeeperRegistry.getInstance();
         }
     }
