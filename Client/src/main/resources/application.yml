@@ -1,32 +1,26 @@
-#nacos配置
 server:
   port: 8000
-
 prpc:
-  nacosAddress: "localhost:8848"
-  reConnectNumber: 5
-  serializerAlgorithm: "kryo"
-  timeOut: 3000
-  loadBalanceAlgorithm: "consistentHash"
-  virtualNodeNum: 100
-  compressAlgorithm: "GZIP"
-  proxy: "cglib"
-  registry: "nacos"
+#注册中心有Nacos和Zookeeper
+#  registry: "nacos"
+#  registryAddress: "localhost:8848"
+  registry: "zookeeper"
+  registryAddress: "localhost:2181"
+  zookeeperRootPath: "prpc"
+  zookeeperRetryBaseTime: 1000
+  zookeeperRetryTimes: 3
 
-##zookeeper配置
-#server:
-#  port: 8000
-#
-#prpc:
-#  reConnectNumber: 5
-#  serializerAlgorithm: "kryo"
-#  timeOut: 3000
-#  loadBalanceAlgorithm: "consistentHash"
-#  virtualNodeNum: 100
-#  compressAlgorithm: "GZIP"
-#  proxy: "cglib"
-#  registry: "zookeeper"
-#  zookeeperAddress: "localhost:2181"
-#  zookeeperRootPath: "prpc"
-#  zookeeperRetryBaseTime: 1000
-#  zookeeperRetryTimes: 3
+#通用的超时设置
+  reConnectNumber: 5
+  timeOut: 3000
+
+#序列化算法JDK，GSON，FastJSON，Kryo，Hessian2，Protostuff
+  serializerAlgorithm: "kryo"
+#负载均衡算法，random，polling，hash，consistentHash
+  loadBalanceAlgorithm: "consistentHash"
+#一致性哈希环虚拟节点数
+  virtualNodeNum: 100
+#压缩算法，目前只有GZIP
+  compressAlgorithm: "GZIP"
+#代理实现，JDK和CGLib
+  proxy: "cglib"

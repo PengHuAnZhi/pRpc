@@ -18,10 +18,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "prpc")
 @PropertySource("classpath:application.yml")
 public class PrpcProperties {
-    /**
-     * {@code Nacos}的地址
-     **/
-    private String nacosAddress = "localhost:8848";
+
     /**
      * {@code Rpc}服务端口地址
      **/
@@ -67,9 +64,9 @@ public class PrpcProperties {
     private String registry;
 
     /**
-     * {@code Zookeeper}注册中心地址
+     * 注册中心地址
      **/
-    private String zookeeperAddress = "localhost:2181";
+    private String registryAddress;
 
     /**
      * {@code Zookeeper} {@code prpc} 服务根目录

@@ -69,7 +69,7 @@ public final class ZookeeperRegistry implements ServiceRegistry {
         rootPath = "/" + PRPC_PROPERTIES.getZookeeperRootPath();
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(PRPC_PROPERTIES.getZookeeperRetryBaseTime(), PRPC_PROPERTIES.getZookeeperRetryTimes());
         zkClient = CuratorFrameworkFactory.builder()
-                .connectString(PRPC_PROPERTIES.getZookeeperAddress())
+                .connectString(PRPC_PROPERTIES.getRegistryAddress())
                 .retryPolicy(retryPolicy)
                 .build();
         zkClient.start();

@@ -1,20 +1,15 @@
-#nacos
 server:
   port: 8081
 prpc:
-  nacosAddress: "localhost:8848"
+#当前服务发布端口
   serverPort: 8888
+#注册中心有Nacos和Zookeeper
+#  registry: "nacos"
+#  registryAddress: "localhost:8848"
+  registry: "zookeeper"
+  registryAddress: "localhost:2181"
+  zookeeperRootPath: "prpc"
+  zookeeperRetryBaseTime: 1000
+  zookeeperRetryTimes: 3
+  #序列化算法JDK，GSON，FastJSON，Kryo，Hessian2，Protostuff
   serializerAlgorithm: "JDK"
-  registry: "nacos"
-
-#zookeeper
-#server:
-#  port: 8081
-#prpc:
-#  serverPort: 8888
-#  serializerAlgorithm: "JDK"
-#  registry: "zookeeper"
-#  zookeeperAddress: "localhost:2181"
-#  zookeeperRootPath: "prpc"
-#  zookeeperRetryBaseTime: 1000
-#  zookeeperRetryTimes: 3

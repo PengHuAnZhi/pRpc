@@ -59,7 +59,7 @@ public final class NacosRegistry implements ServiceRegistry {
      **/
     private NacosRegistry() {
         try {
-            nacosServerAddress = PRPC_PROPERTIES.getNacosAddress();
+            nacosServerAddress = PRPC_PROPERTIES.getRegistryAddress();
             namingService = NamingFactory.createNamingService(nacosServerAddress);
             prpcLoadBalancer = PrpcLoadBalancer.getInstance();
             log.info("nacos服务连接成功:{}", nacosServerAddress);

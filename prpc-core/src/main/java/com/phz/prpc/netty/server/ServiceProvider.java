@@ -54,7 +54,7 @@ public final class ServiceProvider {
         nacosProperties.setService("prpc");
         if (NACOS.equalsIgnoreCase(prpcProperties.getRegistry())) {
             serviceRegistry = NacosRegistry.getInstance();
-            nacosProperties.setServerAddr(prpcProperties.getNacosAddress());
+            nacosProperties.setServerAddr(prpcProperties.getRegistryAddress());
         } else if (ZOOKEEPER.equalsIgnoreCase(prpcProperties.getRegistry())) {
             nacosProperties.setRegisterEnabled(false);
             nacosProperties.setInstanceEnabled(false);
