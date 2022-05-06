@@ -108,7 +108,7 @@ public final class ZookeeperRegistry implements ServiceRegistry {
      **/
     @Override
     public void registerService(String serviceName, InetSocketAddress address) {
-        String path = rootPath + "/" + serviceName + "/" + address.getHostName() + ":" + address.getPort();
+        String path = rootPath + "/" + serviceName + "/" + address.getAddress().getHostAddress() + ":" + address.getPort();
         try {
             if (REGISTERED_PATH_SET.contains(path) || zkClient.checkExists().forPath(path) != null) {
                 log.info("节点 {} 已注册", path);

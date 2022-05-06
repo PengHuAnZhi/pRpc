@@ -11,5 +11,5 @@ prpc:
   zookeeperRootPath: "prpc"
   zookeeperRetryBaseTime: 1000
   zookeeperRetryTimes: 3
-  #序列化算法JDK，GSON，FastJSON，Kryo，Hessian2，Protostuff
+#  序列化算法JDK，GSON，FastJSON，Kryo，Hessian2，Protostuff
   serializerAlgorithm: "JDK"

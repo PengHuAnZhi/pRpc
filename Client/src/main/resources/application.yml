@@ -15,7 +15,7 @@ prpc:
   timeOut: 3000
 
 #序列化算法JDK，GSON，FastJSON，Kryo，Hessian2，Protostuff
-  serializerAlgorithm: "kryo"
+  serializerAlgorithm: "JDK"
 #负载均衡算法，random，polling，hash，consistentHash
   loadBalanceAlgorithm: "consistentHash"
 #一致性哈希环虚拟节点数
